@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Packet Store — Your packets, secured.",
   description:
     "A private, invite-only space to store your thoughts. Request access to get started.",
+  manifest: "/site.webmanifest",
+};
+
+export const viewport = {
+  themeColor: "#0c0c0e",
 };
 
 export default function RootLayout({

@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import LoadingOverlay from "./LoadingOverlay";
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -43,6 +44,8 @@ export default function RequestAccessForm() {
 
   return (
     <div className="relative w-full max-w-md mx-auto">
+      {/* Fullscreen Lottie loader */}
+      <LoadingOverlay isLoading={state === "loading"} message="Sending your request..." />
       <AnimatePresence mode="wait">
         {state === "success" ? (
           <motion.div
@@ -105,32 +108,7 @@ export default function RequestAccessForm() {
               className="h-12 px-6 rounded-xl bg-white text-sm font-semibold text-zinc-950 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
               style={{ boxShadow: "0 0 15px rgba(255,255,255,0.15), 0 0 40px rgba(255,255,255,0.05)" }}
             >
-              {state === "loading" ? (
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="w-4 h-4 animate-spin"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Sending...
-                </span>
-              ) : (
-                "Request Access"
-              )}
+              {state === "loading" ? "Sending..." : "Request Access"}
             </motion.button>
           </motion.form>
         )}
