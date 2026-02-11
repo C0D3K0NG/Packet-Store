@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0c0c0e;
+  --foreground: #fafafa;
+  --accent-teal: #2dd4bf;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* ─── Aura Orb Float ─── */
+@keyframes auraFloat {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(20px, -15px) scale(1.03);
+  }
+
+  66% {
+    transform: translate(-15px, 10px) scale(0.97);
+  }
+}
+
+.aura-orb {
+  animation: auraFloat var(--float-duration, 20s) ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ─── Glow Pulse for CTA ─── */
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(45, 212, 191, 0.15), 0 0 60px rgba(45, 212, 191, 0.05);
+  }
+
+  50% {
+    box-shadow: 0 0 30px rgba(45, 212, 191, 0.25), 0 0 80px rgba(45, 212, 191, 0.1);
+  }
+}
+
+/* ─── Smooth Focus Ring ─── */
+input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-teal);
+}
