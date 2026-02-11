@@ -68,7 +68,7 @@ export default function PacketCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -2 }}
-      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 backdrop-blur-sm transition-colors duration-200 cursor-pointer break-inside-avoid mb-4`}
+      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 transition-colors duration-200 cursor-pointer break-inside-avoid mb-4`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {/* Pin indicator */}
@@ -116,8 +116,8 @@ export default function PacketCard({
             onPin(packet.id);
           }}
           className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${packet.pinned
-              ? "text-teal-400 bg-teal-500/10"
-              : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+            ? "text-teal-400 bg-teal-500/10"
+            : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
             }`}
           title={packet.pinned ? "Unpin" : "Pin"}
         >

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 import PacketCard from "./components/PacketCard";
 import CreatePacketBar from "./components/CreatePacketBar";
 
@@ -19,7 +20,8 @@ const MOCK_PACKETS: Packet[] = [
   {
     id: "1",
     title: "Welcome to Packet Store",
-    content: "Your private space for thoughts. Pin important notes, color-code them, organize your mind.",
+    content:
+      "Your private space for thoughts. Pin important notes, color-code them, organize your mind.",
     color: "teal",
     pinned: true,
     createdAt: new Date().toISOString(),
@@ -27,7 +29,8 @@ const MOCK_PACKETS: Packet[] = [
   {
     id: "2",
     title: "Project Ideas",
-    content: "- ESP32 weather station\n- Home automation dashboard\n- AI-powered recipe generator\n- Custom keyboard firmware",
+    content:
+      "- ESP32 weather station\n- Home automation dashboard\n- AI-powered recipe generator\n- Custom keyboard firmware",
     color: "purple",
     pinned: false,
     createdAt: new Date().toISOString(),
@@ -43,7 +46,8 @@ const MOCK_PACKETS: Packet[] = [
   {
     id: "4",
     title: "",
-    content: "The best way to predict the future is to invent it. — Alan Kay",
+    content:
+      "The best way to predict the future is to invent it. — Alan Kay",
     color: "default",
     pinned: false,
     createdAt: new Date().toISOString(),
@@ -51,7 +55,8 @@ const MOCK_PACKETS: Packet[] = [
   {
     id: "5",
     title: "API Endpoints",
-    content: "POST /api/request-access\nGET /api/verify\nGET /api/packets\nPOST /api/packets",
+    content:
+      "POST /api/request-access\nGET /api/verify\nGET /api/packets\nPOST /api/packets",
     color: "blue",
     pinned: true,
     createdAt: new Date().toISOString(),
@@ -59,7 +64,8 @@ const MOCK_PACKETS: Packet[] = [
   {
     id: "6",
     title: "Design Tokens",
-    content: "Background: zinc-950\nAccent: teal-500\nText: zinc-100 / zinc-400\nBorder: white/10",
+    content:
+      "Background: zinc-950\nAccent: teal-500\nText: zinc-100 / zinc-400\nBorder: white/10",
     color: "rose",
     pinned: false,
     createdAt: new Date().toISOString(),
@@ -68,15 +74,31 @@ const MOCK_PACKETS: Packet[] = [
 
 export default function DashboardPage() {
   const [packets, setPackets] = useState<Packet[]>([]);
-  const [userEmail, setUserEmail] = useState("user@example.com");
+  const [userEmail, setUserEmail] = useState("");
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // In production, fetch from /api/packets
-    // For now, use mock data
     setPackets(MOCK_PACKETS);
 
-    // Try to get email from cookie/session
-    // For dev, use default
+    // Fetch real email from JWT
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.email) setUserEmail(data.email);
+      })
+      .catch(() => { });
+  }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   const handleCreate = useCallback((title: string, content: string) => {
@@ -115,9 +137,11 @@ export default function DashboardPage() {
     window.location.href = "/";
   };
 
-  // Separate pinned and unpinned
   const pinned = packets.filter((p) => p.pinned);
   const unpinned = packets.filter((p) => !p.pinned);
+
+  // Get user initial for avatar
+  const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -129,24 +153,67 @@ export default function DashboardPage() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center">
-            <svg className="w-4 h-4 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
+          <Image
+            src="/icon.svg"
+            alt="Packet Store"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
           <span className="text-sm font-semibold text-zinc-200 tracking-tight">
             Packet Store
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-zinc-500 hidden sm:block">{userEmail}</span>
+        {/* Avatar with dropdown */}
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={handleLogout}
-            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            onClick={() => setShowMenu(!showMenu)}
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-sm font-bold text-zinc-950 cursor-pointer hover:shadow-lg hover:shadow-teal-500/20 transition-shadow"
+            title={userEmail}
           >
-            Sign out
+            {initial}
           </button>
+
+          <AnimatePresence>
+            {showMenu && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-10 w-56 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl shadow-black/40 overflow-hidden"
+              >
+                <div className="px-4 py-3 border-b border-white/5">
+                  <p className="text-xs text-zinc-500">Signed in as</p>
+                  <p className="text-sm text-zinc-200 truncate font-medium mt-0.5">
+                    {userEmail || "Loading..."}
+                  </p>
+                </div>
+                <div className="p-1.5">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Sign out
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </nav>
 
@@ -202,7 +269,9 @@ export default function DashboardPage() {
 
         {packets.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-zinc-600 text-sm">No packets yet. Start by taking a note above.</p>
+            <p className="text-zinc-600 text-sm">
+              No packets yet. Start by taking a note above.
+            </p>
           </div>
         )}
       </main>
