@@ -55,7 +55,7 @@ interface PacketCardProps {
   onPin: (id: string) => void;
   isBlurMode?: boolean;
   fontStyle?: "sans" | "mono";
-  variant?: "glass" | "solid" | "outline" | "brutal" | "ghost";
+  variant?: "glass" | "solid" | "outline" | "brutal" | "ghost" | "cyber" | "neumorph" | "pixel" | "retro" | "glow" | "clay" | "paper";
   density?: "comfortable" | "compact";
 }
 
@@ -132,6 +132,34 @@ export default function PacketCard({
     // Low opacity until hover
     variantClasses = `border border-transparent bg-white/5 opacity-60 hover:opacity-100 hover:bg-white/10 hover:border-white/10`;
     if (packet.color !== "default") variantClasses = `border border-transparent ${color.bg} opacity-50 hover:opacity-100 hover:border-${color.border}`;
+  } else if (variant === "cyber") {
+    // Cyberpunk: Angled corners
+    variantClasses = `border-x-2 border-zinc-800 bg-zinc-900/80 hover:border-teal-500/50 hover:shadow-[0_0_15px_rgba(20,184,166,0.3)]`;
+    if (packet.color !== "default") variantClasses = `border-x-2 border-${color.border} ${color.bg} hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]`;
+  } else if (variant === "neumorph") {
+    // Soft 3D look
+    variantClasses = `bg-zinc-800 shadow-[-5px_-5px_10px_rgba(255,255,255,0.05),5px_5px_15px_rgba(0,0,0,0.5)] border border-white/5 hover:shadow-[-2px_-2px_5px_rgba(255,255,255,0.05),2px_2px_5px_rgba(0,0,0,0.5)] hover:translate-y-[1px]`;
+    if (packet.color !== "default") variantClasses = `${color.bg} shadow-[-5px_-5px_10px_rgba(255,255,255,0.1),5px_5px_15px_rgba(0,0,0,0.3)] border border-white/10`;
+  } else if (variant === "pixel") {
+    // Retro Gaming
+    variantClasses = `rounded-none border-2 border-dashed border-zinc-600 bg-zinc-900 hover:border-zinc-400 hover:bg-zinc-800 font-mono`;
+    if (packet.color !== "default") variantClasses = `rounded-none border-2 border-dashed ${color.border} ${color.bg} hover:brightness-110`;
+  } else if (variant === "retro") {
+    // Win95 Bevel
+    variantClasses = `rounded-sm border-2 border-t-white/20 border-l-white/20 border-b-black/50 border-r-black/50 bg-zinc-800 active:border-t-black/50 active:border-l-black/50 active:border-b-white/20 active:border-r-white/20 hover:bg-zinc-700`;
+    if (packet.color !== "default") variantClasses = `rounded-sm border-2 border-t-white/30 border-l-white/30 border-b-black/40 border-r-black/40 ${color.bg} hover:brightness-105 active:brightness-95`;
+  } else if (variant === "glow") {
+    // Strong Outer Glow
+    variantClasses = `border border-zinc-700 bg-zinc-950 shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] hover:border-zinc-500`;
+    if (packet.color !== "default") variantClasses = `border ${color.border} ${color.bg} shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]`;
+  } else if (variant === "clay") {
+    // Matte 3D
+    variantClasses = `rounded-2xl border-none bg-zinc-700 shadow-[inset_-6px_-6px_12px_rgba(0,0,0,0.3),inset_6px_6px_12px_rgba(255,255,255,0.05)] hover:scale-[1.01] transition-transform`;
+    if (packet.color !== "default") variantClasses = `rounded-2xl border-none ${color.bg} shadow-[inset_-8px_-8px_16px_rgba(0,0,0,0.2),inset_8px_8px_16px_rgba(255,255,255,0.1)] hover:scale-[1.01]`;
+  } else if (variant === "paper") {
+    // Physical Paper
+    variantClasses = `rounded-lg border border-zinc-300/10 bg-zinc-100 text-zinc-900 shadow-md hover:shadow-xl hover:-rotate-1 transition-all`;
+    if (packet.color !== "default") variantClasses = `rounded-lg border border-black/5 ${color.bg} text-zinc-900 shadow-md hover:shadow-xl hover:-rotate-1 brightness-125 saturate-50`;
   }
 
   return (
@@ -142,12 +170,13 @@ export default function PacketCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={variant === "brutal" ? {} : { y: -2 }} // Disable float for brutal (it has its own movement)
-      className={`${baseClasses} ${variantClasses} ${paddingClass}`}
+      className={`${baseClasses} ${variantClasses} ${paddingClass} ${variant === "cyber" ? "rounded-none clip-path-polygon-[0_0,100%_0,100%_calc(100%-15px),calc(100%-15px)_100%,0_100%]" : ""}`} // Add clip-path for cyber
       onClick={() => !isEditing && setIsEditing(true)}
+      style={variant === "cyber" ? { clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%)" } : {}}
     >
       {/* Pattern Overlay - Clipped specifically to rounded corners */}
-      {/* Only show pattern in glass or solid mode, maybe optional in outline? Let's hide in outline for minimalism */}
-      {(color as any).pattern && variant !== "outline" && (
+      {/* Less patterns for minimal styles */}
+      {(color as any).pattern && !["outline", "ghost", "neumorph", "clay"].includes(variant) && (
         <div
           className="absolute inset-0 pointer-events-none opacity-40 z-0 rounded-xl overflow-hidden"
           style={{

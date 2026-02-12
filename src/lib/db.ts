@@ -38,9 +38,15 @@ export async function initDb() {
     CREATE TABLE IF NOT EXISTS authorized_users (
       id SERIAL PRIMARY KEY,
       email VARCHAR(255) NOT NULL UNIQUE,
-      authorized_at TIMESTAMP DEFAULT NOW()
+      authorized_at TIMESTAMP DEFAULT NOW(),
+      theme VARCHAR(20) DEFAULT 'aurora',
+      card_style VARCHAR(20) DEFAULT 'glass'
     )
   `);
+
+  // Migration for existing tables (safe to run every time)
+  await query(`ALTER TABLE authorized_users ADD COLUMN IF NOT EXISTS theme VARCHAR(20) DEFAULT 'aurora'`);
+  await query(`ALTER TABLE authorized_users ADD COLUMN IF NOT EXISTS card_style VARCHAR(20) DEFAULT 'glass'`);
 
   await query(`
     CREATE TABLE IF NOT EXISTS packets (

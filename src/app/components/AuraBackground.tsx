@@ -1,7 +1,7 @@
 "use client";
 
 interface AuraBackgroundProps {
-  theme: "aurora" | "neon" | "velvet" | "ocean" | "sunset" | "matrix" | "monochrome";
+  theme: "aurora" | "neon" | "velvet" | "ocean" | "sunset" | "matrix" | "monochrome" | "cosmic" | "serenity" | "terminal" | "glitch" | "quantum";
 }
 
 export default function AuraBackground({ theme }: AuraBackgroundProps) {
@@ -106,6 +106,104 @@ export default function AuraBackground({ theme }: AuraBackgroundProps) {
         />
         {/* Subtle gray glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/5 blur-[200px]" />
+      </div>
+    );
+  }
+
+  if (theme === "cosmic") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#0b0014]">
+        {/* Stars */}
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: "radial-gradient(1px 1px at 10px 10px, white, transparent), radial-gradient(2px 2px at 50px 50px, white, transparent), radial-gradient(1px 1px at 100px 100px, white, transparent)",
+            backgroundSize: "200px 200px"
+          }}
+        />
+        {/* Nebula Swirls */}
+        <div className="absolute top-[-10%] right-[-10%] w-[800px] h-[800px] bg-fuchsia-900/30 blur-[150px] animate-pulse" />
+        <div className="absolute bottom-[10%] left-[-10%] w-[600px] h-[600px] bg-violet-900/30 blur-[150px]" />
+
+        {/* Center Void */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-radial from-transparent to-[#0b0014]" />
+      </div>
+    );
+  }
+
+  if (theme === "serenity") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#f0f2f0]">
+        {/* Light Mode - Zen */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#f0f2f0] via-[#e0e7e4] to-[#d6e0db]" />
+
+        {/* Subtle organic shapes */}
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[#d1e8e2]/40 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#e8d1d1]/30 rounded-full blur-[120px]" />
+      </div>
+    );
+  }
+
+  if (theme === "terminal") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#1a1200]">
+        {/* Scanlines */}
+        <div
+          className="absolute inset-0 z-10 opacity-10 pointer-events-none"
+          style={{
+            background: "linear-gradient(to bottom, transparent 50%, rgba(0, 0, 0, 0.2) 50%)",
+            backgroundSize: "100% 4px"
+          }}
+        />
+        {/* Amber Glow */}
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-900/10 to-amber-950/20" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/5 blur-[150px]" />
+      </div>
+    );
+  }
+
+  if (theme === "glitch") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#050505]">
+        {/* Glitchy noise */}
+        <div
+          className="absolute inset-0 opacity-[0.15]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.5' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+        {/* High contrast spots */}
+        <div className="absolute top-[20%] left-[20%] w-[300px] h-[300px] bg-red-600/20 blur-[100px] mix-blend-color-dodge" />
+        <div className="absolute bottom-[20%] right-[20%] w-[300px] h-[300px] bg-blue-600/20 blur-[100px] mix-blend-color-dodge" />
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)",
+            backgroundSize: "10px 10px"
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (theme === "quantum") {
+    return (
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#050014]">
+        {/* Precise Grid */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: "radial-gradient(circle, rgba(139, 92, 246, 0.3) 1px, transparent 1px)",
+            backgroundSize: "30px 30px"
+          }}
+        />
+
+        {/* Sharp gradients */}
+        <div className="absolute top-0 inset-x-0 h-[400px] bg-gradient-to-b from-violet-900/20 to-transparent" />
+        <div className="absolute bottom-0 inset-x-0 h-[400px] bg-gradient-to-t from-cyan-900/20 to-transparent" />
+
+        {/* Quantum Fluctuation (Orb) */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-violet-500/10 blur-[100px] rounded-full mix-blend-screen" />
       </div>
     );
   }

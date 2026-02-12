@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAccessToken, COOKIE_NAME } from "@/lib/auth";
 import { getPackets, addPacket, updatePacket, deletePacket } from "@/lib/packets";
+import { getUserSettings } from "@/lib/userSettings";
 
 /**
  * GET /api/packets — Fetch all packets for the authenticated user.
@@ -12,8 +13,12 @@ export async function GET(req: NextRequest) {
   const user = await verifyAccessToken(token);
   if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  const packets = await getPackets(user.email);
-  return NextResponse.json({ packets, email: user.email });
+  const [packets, settings] = await Promise.all([
+    getPackets(user.email),
+    getUserSettings(user.email)
+  ]);
+
+  return NextResponse.json({ packets, email: user.email, settings });
 }
 
 /**

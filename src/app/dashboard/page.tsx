@@ -35,24 +35,53 @@ export default function DashboardPage() {
   const [fontStyle, setFontStyle] = useState<'sans' | 'mono'>('sans');
 
   /* APPEARANCE STATE */
-  const [theme, setTheme] = useState<"aurora" | "neon" | "velvet" | "ocean" | "sunset" | "matrix" | "monochrome">("aurora");
-  const [cardVariant, setCardVariant] = useState<"glass" | "solid" | "outline" | "brutal" | "ghost">("glass");
+  const [theme, setTheme] = useState<"aurora" | "neon" | "velvet" | "ocean" | "sunset" | "matrix" | "monochrome" | "cosmic" | "serenity" | "terminal" | "glitch" | "quantum">("aurora");
+  const [cardVariant, setCardVariant] = useState<"glass" | "solid" | "outline" | "brutal" | "ghost" | "cyber" | "neumorph" | "pixel" | "retro" | "glow" | "clay" | "paper">("glass");
   const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
 
-  // ─── Fetch packets from API on mount ───
+  // Light Mode detection for Serenity theme (and potentially Paper style if we want force light mode, but let's stick to theme driving it)
+  const isLightMode = theme === "serenity";
+
+  // ─── Fetch packets & settings on mount ───
   useEffect(() => {
     fetch("/api/packets")
       .then((r) => r.json())
       .then((data) => {
         if (data.packets) setPackets(data.packets);
         if (data.email) setUserEmail(data.email);
+        if (data.settings) {
+          if (data.settings.theme) setTheme(data.settings.theme);
+          if (data.settings.cardStyle) setCardVariant(data.settings.cardStyle);
+        }
         setLoading(false);
       })
       .catch(() => {
         setLoading(false);
-        toast.push("Failed to load packets", "error");
+        toast.push("Failed to load data", "error");
       });
   }, [toast]);
+
+  // ─── Persist Settings ───
+  const persistSettings = useCallback((newTheme?: string, newStyle?: string) => {
+    fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        theme: newTheme,
+        cardStyle: newStyle
+      }),
+    }).catch(err => console.error("Failed to save settings", err));
+  }, []);
+
+  const handleThemeChange = (newTheme: typeof theme) => {
+    setTheme(newTheme);
+    persistSettings(newTheme, undefined);
+  };
+
+  const handleStyleChange = (newStyle: typeof cardVariant) => {
+    setCardVariant(newStyle);
+    persistSettings(undefined, newStyle);
+  };
 
   // Close menus on outside click
   useEffect(() => {
@@ -172,16 +201,27 @@ export default function DashboardPage() {
     if (theme === "sunset") return "bg-[#0f0505]";
     if (theme === "matrix") return "bg-[#000500]";
     if (theme === "monochrome") return "bg-black";
+    if (theme === "cosmic") return "bg-[#0b0014]";
+    if (theme === "serenity") return "bg-[#f0f2f0]"; // Light!
+    if (theme === "terminal") return "bg-[#1a1200]";
+    if (theme === "glitch") return "bg-[#050505]";
+    if (theme === "quantum") return "bg-[#050014]";
     return "bg-zinc-950"; // Aurora
   };
 
+  // Text Color helpers
+  const textPrimary = isLightMode ? "text-zinc-800" : "text-zinc-200";
+  const textSecondary = isLightMode ? "text-zinc-500" : "text-zinc-400";
+  const borderLight = isLightMode ? "border-black/5" : "border-white/5";
+  const bgSurface = isLightMode ? "bg-white/50" : "bg-zinc-950/80";
+
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${getBaseBgColor()}`}>
+    <div className={`min-h-screen transition-colors duration-500 ${getBaseBgColor()} ${isLightMode ? 'light-mode-active' : ''}`}>
       {/* Dynamic Background */}
       <AuraBackground theme={theme} />
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl gap-4">
+      <nav className={`sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b ${borderLight} ${bgSurface} backdrop-blur-xl gap-4`}>
         <div className="flex items-center gap-3 shrink-0">
           <Image
             src="/icon.svg"
@@ -190,7 +230,7 @@ export default function DashboardPage() {
             height={32}
             className="rounded-lg"
           />
-          <span className="text-sm font-semibold text-zinc-200 tracking-tight hidden sm:block">
+          <span className={`text-sm font-semibold tracking-tight hidden sm:block ${textPrimary}`}>
             Packet Store
           </span>
         </div>
@@ -199,8 +239,10 @@ export default function DashboardPage() {
         <div className="flex-1 max-w-lg">
           <div className="relative group">
             <div className={`absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none transition-colors ${theme === "neon" ? "text-fuchsia-500" :
-                theme === "matrix" ? "text-green-500" :
-                  "text-zinc-500 group-focus-within:text-teal-500"
+              theme === "matrix" ? "text-green-500" :
+                theme === "terminal" ? "text-amber-500" :
+                  isLightMode ? "text-zinc-400 group-focus-within:text-teal-600" :
+                    "text-zinc-500 group-focus-within:text-teal-500"
               }`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -211,9 +253,13 @@ export default function DashboardPage() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900 focus:text-white transition-all outline-none ${theme === "neon" ? "focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/20" :
+              className={`w-full bg-transparent border rounded-xl py-2 pl-10 pr-4 text-sm transition-all outline-none ${isLightMode
+                ? "border-black/10 text-zinc-800 placeholder:text-zinc-400 focus:bg-white/50 focus:border-teal-500/50"
+                : "bg-white/5 border-white/10 text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900"
+                } ${theme === "neon" ? "focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/20" :
                   theme === "matrix" ? "focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20" :
-                    "focus:border-white/20 focus:ring-1 focus:ring-white/10"
+                    theme === "terminal" ? "focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20" :
+                      "focus:border-white/20 focus:ring-1 focus:ring-white/10"
                 }`}
             />
           </div>
@@ -225,7 +271,8 @@ export default function DashboardPage() {
           <div className="relative" ref={appearanceRef}>
             <button
               onClick={() => setShowAppearance(!showAppearance)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${isLightMode ? "text-zinc-500 hover:text-zinc-800 hover:bg-black/5" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                }`}
               title="Appearance"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -239,12 +286,13 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, scale: 0.95, y: 4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                  className="absolute right-0 top-10 w-72 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-4 z-50 glass-panel"
+                  className={`absolute right-0 top-10 w-72 rounded-xl border shadow-2xl p-4 z-50 glass-panel ${isLightMode ? "bg-white/90 border-black/10 text-zinc-800" : "bg-zinc-900 border-white/10"
+                    }`}
                 >
                   <div className="space-y-5">
                     {/* Theme Section */}
                     <div>
-                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Theme</h4>
+                      <h4 className={`text-[10px] uppercase font-bold mb-2 ${isLightMode ? "text-zinc-400" : "text-zinc-600"}`}>Theme</h4>
                       <div className="grid grid-cols-4 gap-2">
                         {[
                           { id: "aurora", bg: "bg-teal-500" },
@@ -254,13 +302,18 @@ export default function DashboardPage() {
                           { id: "sunset", bg: "bg-orange-500" },
                           { id: "matrix", bg: "bg-green-600" },
                           { id: "monochrome", bg: "bg-zinc-400" },
+                          { id: "cosmic", bg: "bg-purple-600" },
+                          { id: "serenity", bg: "bg-[#d1e8e2] border-gray-300" }, // Light Mode
+                          { id: "terminal", bg: "bg-amber-600" },
+                          { id: "glitch", bg: "bg-red-600" },
+                          { id: "quantum", bg: "bg-violet-600" },
                         ].map(t => (
                           <button
                             key={t.id}
-                            onClick={() => setTheme(t.id as any)}
+                            onClick={() => handleThemeChange(t.id as any)}
                             className={`h-8 rounded-lg border flex items-center justify-center transition-all ${theme === t.id
-                                ? "border-white/40 ring-2 ring-white/10 scale-110"
-                                : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
+                              ? "border-white/40 ring-2 ring-white/10 scale-110"
+                              : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
                               } ${t.bg}`}
                             title={t.id}
                           />
@@ -270,13 +323,15 @@ export default function DashboardPage() {
 
                     {/* Card Style */}
                     <div>
-                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Card Style</h4>
-                      <div className="grid grid-cols-3 gap-1 bg-zinc-950 rounded-lg p-1 border border-white/5">
-                        {["glass", "solid", "outline", "brutal", "ghost"].map(v => (
+                      <h4 className={`text-[10px] uppercase font-bold mb-2 ${isLightMode ? "text-zinc-400" : "text-zinc-600"}`}>Card Style</h4>
+                      <div className={`grid grid-cols-3 gap-1 rounded-lg p-1 border ${isLightMode ? "bg-zinc-100 border-black/5" : "bg-zinc-950 border-white/5"}`}>
+                        {["glass", "solid", "outline", "brutal", "ghost", "cyber", "neumorph", "pixel", "retro", "glow", "clay", "paper"].map(v => (
                           <button
                             key={v}
-                            onClick={() => setCardVariant(v as any)}
-                            className={`py-1.5 text-[10px] sm:text-xs rounded-md capitalize transition-all ${cardVariant === v ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
+                            onClick={() => handleStyleChange(v as any)}
+                            className={`py-1.5 text-[10px] sm:text-xs rounded-md capitalize transition-all ${cardVariant === v
+                              ? (isLightMode ? "bg-white text-zinc-900 shadow-sm" : "bg-white/10 text-white shadow-sm")
+                              : (isLightMode ? "text-zinc-500 hover:text-zinc-900" : "text-zinc-500 hover:text-zinc-300")
                               }`}
                           >
                             {v}
@@ -287,8 +342,8 @@ export default function DashboardPage() {
 
                     {/* Density */}
                     <div>
-                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Density</h4>
-                      <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/5">
+                      <h4 className={`text-[10px] uppercase font-bold mb-2 ${isLightMode ? "text-zinc-400" : "text-zinc-600"}`}>Density</h4>
+                      <div className={`flex rounded-lg p-1 border ${isLightMode ? "bg-zinc-100 border-black/5" : "bg-zinc-950 border-white/5"}`}>
                         {[
                           { id: "comfortable", icon: "M4 6h16M4 12h16M4 18h16" },
                           { id: "compact", icon: "M4 10h16M4 14h16M4 18h16" }
@@ -296,7 +351,9 @@ export default function DashboardPage() {
                           <button
                             key={d.id}
                             onClick={() => setDensity(d.id as any)}
-                            className={`flex-1 py-1 text-xs rounded-md flex items-center justify-center transition-all ${density === d.id ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+                            className={`flex-1 py-1 text-xs rounded-md flex items-center justify-center transition-all ${density === d.id
+                              ? (isLightMode ? "bg-white text-zinc-900 shadow-sm" : "bg-white/10 text-white")
+                              : (isLightMode ? "text-zinc-500 hover:text-zinc-900" : "text-zinc-500 hover:text-zinc-300")
                               }`}
                             title={d.id}
                           >
@@ -318,10 +375,15 @@ export default function DashboardPage() {
             <button
               onClick={() => setShowMenu(!showMenu)}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-zinc-950 cursor-pointer hover:shadow-lg transition-shadow ${theme === "neon" ? "bg-gradient-to-br from-fuchsia-500 to-cyan-500 shadow-fuchsia-500/20" :
-                  theme === "velvet" ? "bg-gradient-to-br from-rose-500 to-indigo-500 shadow-rose-500/20" :
-                    theme === "matrix" ? "bg-gradient-to-br from-green-500 to-emerald-500 shadow-green-500/20" :
-                      theme === "monochrome" ? "bg-gradient-to-br from-zinc-300 to-zinc-500 shadow-white/10" :
-                        "bg-gradient-to-br from-teal-500 to-cyan-500 shadow-teal-500/20"
+                theme === "velvet" ? "bg-gradient-to-br from-rose-500 to-indigo-500 shadow-rose-500/20" :
+                  theme === "matrix" ? "bg-gradient-to-br from-green-500 to-emerald-500 shadow-green-500/20" :
+                    theme === "monochrome" ? "bg-gradient-to-br from-zinc-300 to-zinc-500 shadow-white/10" :
+                      theme === "cosmic" ? "bg-gradient-to-br from-purple-500 to-pink-500 shadow-purple-500/20" :
+                        theme === "serenity" ? "bg-gradient-to-br from-[#d1e8e2] to-[#e8d1d1] text-zinc-700 shadow-black/5" :
+                          theme === "terminal" ? "bg-amber-500/90 text-amber-950 shadow-amber-500/20" :
+                            theme === "glitch" ? "bg-white text-black shadow-white/20" :
+                              theme === "quantum" ? "bg-gradient-to-br from-violet-600 to-cyan-500 shadow-violet-500/20" :
+                                "bg-gradient-to-br from-teal-500 to-cyan-500 shadow-teal-500/20"
                 }`}
               title={userEmail}
             >
