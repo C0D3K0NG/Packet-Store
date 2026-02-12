@@ -47,40 +47,44 @@ export default function DashboardPage() {
     fetch("/api/packets")
       .then((r) => r.json())
       .then((data) => {
+        console.log("Fetched data:", data); // Debug log
         if (data.packets) setPackets(data.packets);
         if (data.email) setUserEmail(data.email);
         if (data.settings) {
+          console.log("Applying settings:", data.settings); // Debug log
           if (data.settings.theme) setTheme(data.settings.theme);
           if (data.settings.cardStyle) setCardVariant(data.settings.cardStyle);
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Fetch error:", err);
         setLoading(false);
         toast.push("Failed to load data", "error");
       });
   }, [toast]);
 
   // ─── Persist Settings ───
-  const persistSettings = useCallback((newTheme?: string, newStyle?: string) => {
+  const persistSettings = useCallback((themeToSave: string, styleToSave: string) => {
+    console.log("Saving settings:", { theme: themeToSave, cardStyle: styleToSave });
     fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        theme: newTheme,
-        cardStyle: newStyle
+        theme: themeToSave,
+        cardStyle: styleToSave
       }),
     }).catch(err => console.error("Failed to save settings", err));
   }, []);
 
   const handleThemeChange = (newTheme: typeof theme) => {
     setTheme(newTheme);
-    persistSettings(newTheme, undefined);
+    persistSettings(newTheme, cardVariant);
   };
 
   const handleStyleChange = (newStyle: typeof cardVariant) => {
     setCardVariant(newStyle);
-    persistSettings(undefined, newStyle);
+    persistSettings(theme, newStyle);
   };
 
   // Close menus on outside click

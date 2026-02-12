@@ -46,11 +46,18 @@ export async function updateUserSettings(email: string, settings: Partial<UserSe
   const newTheme = settings.theme !== undefined ? settings.theme : current.theme;
   const newStyle = settings.cardStyle !== undefined ? settings.cardStyle : current.cardStyle;
 
-  await query(
-    `INSERT INTO user_preferences (email, theme, card_style, updated_at)
-     VALUES ($1, $2, $3, NOW())
-     ON CONFLICT (email)
-     DO UPDATE SET theme = $2, card_style = $3, updated_at = NOW()`,
-    [email, newTheme, newStyle]
-  );
+  console.log(`[DB] Updating settings for ${email}:`, { newTheme, newStyle });
+
+  try {
+    await query(
+      `INSERT INTO user_preferences (email, theme, card_style, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (email)
+       DO UPDATE SET theme = $2, card_style = $3, updated_at = NOW()`,
+      [email, newTheme, newStyle]
+    );
+  } catch (err) {
+    console.error("[DB] Failed to update user settings:", err);
+    throw err;
+  }
 }
