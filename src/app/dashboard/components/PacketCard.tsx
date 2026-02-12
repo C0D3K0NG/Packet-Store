@@ -25,6 +25,13 @@ const COLORS = [
   { name: "amber", bg: "bg-amber-900/30", border: "border-amber-700/30" },
   { name: "rose", bg: "bg-rose-900/30", border: "border-rose-700/30" },
   { name: "blue", bg: "bg-blue-900/30", border: "border-blue-700/30" },
+  { name: "green", bg: "bg-green-900/30", border: "border-green-700/30" },
+  { name: "orange", bg: "bg-orange-900/30", border: "border-orange-700/30" },
+  { name: "cyan", bg: "bg-cyan-900/30", border: "border-cyan-700/30" },
+  { name: "fuchsia", bg: "bg-fuchsia-900/30", border: "border-fuchsia-700/30" },
+  { name: "indigo", bg: "bg-indigo-900/30", border: "border-indigo-700/30" },
+  { name: "lime", bg: "bg-lime-900/30", border: "border-lime-700/30" },
+  { name: "emerald", bg: "bg-emerald-900/30", border: "border-emerald-700/30" },
 ];
 
 function getColorClasses(colorName: string) {
