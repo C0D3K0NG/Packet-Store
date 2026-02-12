@@ -123,6 +123,24 @@ export default function PacketCard({
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onPaste={(e) => {
+              const text = e.clipboardData.getData("text");
+              import("@/lib/detectLanguage").then(({ detectLanguage }) => {
+                const lang = detectLanguage(text);
+                if (lang) {
+                  e.preventDefault();
+                  const formatted = "```" + lang + "\n" + text + "\n```";
+                  const textarea = e.currentTarget;
+                  const start = textarea.selectionStart;
+                  const end = textarea.selectionEnd;
+                  const newContent = content.substring(0, start) + formatted + content.substring(end);
+                  setContent(newContent);
+                  setTimeout(() => {
+                    textarea.selectionStart = textarea.selectionEnd = start + formatted.length;
+                  }, 0);
+                }
+              });
+            }}
             placeholder="Take a note..."
             className={`w-full h-full bg-transparent text-zinc-300 placeholder:text-zinc-500 outline-none resize-none text-xs ${fontStyle === "mono" ? "font-mono" : "font-sans"}`}
             rows={6}

@@ -67,6 +67,27 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
                   handleSubmit();
                 }
               }}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData("text");
+                // Lazy import or just use the imported function
+                // We'll trust the import is added at the top or we add it now
+                import("@/lib/detectLanguage").then(({ detectLanguage }) => {
+                  const lang = detectLanguage(text);
+                  if (lang) {
+                    e.preventDefault();
+                    const formatted = "```" + lang + "\n" + text + "\n```";
+                    const textarea = e.currentTarget;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const newContent = content.substring(0, start) + formatted + content.substring(end);
+                    setContent(newContent);
+                    // queue cursor update
+                    setTimeout(() => {
+                      textarea.selectionStart = textarea.selectionEnd = start + formatted.length;
+                    }, 0);
+                  }
+                });
+              }}
               placeholder="Take a note..."
               className="w-full bg-transparent px-4 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 outline-none resize-none min-h-[80px]"
               rows={3}

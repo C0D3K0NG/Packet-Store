@@ -17,6 +17,7 @@ All notable changes to the Packet Store project will be documented in this file.
 - **Privacy Mode**: Blur content until hovered.
 - **Typography**: Switch between Sans/Mono fonts.
 - **Tagging**: Auto-extract `#tags` from content and filter by them.
+- **Smart Paste**: Automatically detects code language when pasting and wraps in markdown.
 
 ### Changed
 - **OTP Verification**: Email is now sent directly to the user (with admin fallback).
