@@ -18,6 +18,7 @@ All notable changes to the Packet Store project will be documented in this file.
 - **Typography**: Switch between Sans/Mono fonts.
 - **Tagging**: Auto-extract `#tags` from content and filter by them.
 - **Smart Paste**: Automatically detects code language when pasting and wraps in markdown.
+- **Code Badges**: Shows language name (e.g., JS, PY) in the top-right of code blocks on hover.
 
 ### Changed
 - **OTP Verification**: Email is now sent directly to the user (with admin fallback).

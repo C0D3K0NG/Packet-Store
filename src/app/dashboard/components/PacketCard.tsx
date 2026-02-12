@@ -153,15 +153,22 @@ export default function PacketCard({
                   code({ node, inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || "");
                     return !inline && match ? (
-                      <SyntaxHighlighter
-                        style={vscDarkPlus}
-                        language={match[1]}
-                        PreTag="div"
-                        customStyle={{ margin: 0, borderRadius: "0.5rem", fontSize: "0.80rem" }}
-                        {...props}
-                      >
-                        {String(children).replace(/\n$/, "")}
-                      </SyntaxHighlighter>
+                      <div className="relative group/code">
+                        {match && (
+                          <div className="absolute top-2 right-2 text-[10px] uppercase font-bold text-zinc-500 bg-zinc-800/80 px-1.5 py-0.5 rounded border border-white/5 opacity-0 group-hover/code:opacity-100 transition-opacity pointer-events-none select-none">
+                            {match[1]}
+                          </div>
+                        )}
+                        <SyntaxHighlighter
+                          style={vscDarkPlus}
+                          language={match[1]}
+                          PreTag="div"
+                          customStyle={{ margin: 0, borderRadius: "0.5rem", fontSize: "0.80rem", paddingTop: match ? "2rem" : "1rem" }}
+                          {...props}
+                        >
+                          {String(children).replace(/\n$/, "")}
+                        </SyntaxHighlighter>
+                      </div>
                     ) : (
                       <code className={`${className} bg-white/10 px-1 py-0.5 rounded text-xs`} {...props}>
                         {children}
