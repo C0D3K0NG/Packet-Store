@@ -15,79 +15,23 @@ interface Packet {
   createdAt: string;
 }
 
-// Mock data for development
-const MOCK_PACKETS: Packet[] = [
-  {
-    id: "1",
-    title: "Welcome to Packet Store",
-    content:
-      "Your private space for thoughts. Pin important notes, color-code them, organize your mind.",
-    color: "teal",
-    pinned: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    title: "Project Ideas",
-    content:
-      "- ESP32 weather station\n- Home automation dashboard\n- AI-powered recipe generator\n- Custom keyboard firmware",
-    color: "purple",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    title: "Quick Note",
-    content: "Remember to push the latest changes before the demo.",
-    color: "amber",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    title: "",
-    content:
-      "The best way to predict the future is to invent it. — Alan Kay",
-    color: "default",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "5",
-    title: "API Endpoints",
-    content:
-      "POST /api/request-access\nGET /api/verify\nGET /api/packets\nPOST /api/packets",
-    color: "blue",
-    pinned: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "6",
-    title: "Design Tokens",
-    content:
-      "Background: zinc-950\nAccent: teal-500\nText: zinc-100 / zinc-400\nBorder: white/10",
-    color: "rose",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-  },
-];
-
 export default function DashboardPage() {
   const [packets, setPackets] = useState<Packet[]>([]);
   const [userEmail, setUserEmail] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // ─── Fetch packets from API on mount ───
   useEffect(() => {
-    setPackets(MOCK_PACKETS);
-
-    // Fetch real email from JWT
-    fetch("/api/me")
+    fetch("/api/packets")
       .then((r) => r.json())
       .then((data) => {
+        if (data.packets) setPackets(data.packets);
         if (data.email) setUserEmail(data.email);
+        setLoading(false);
       })
-      .catch(() => { });
+      .catch(() => setLoading(false));
   }, []);
 
   // Close menu on outside click
@@ -101,36 +45,74 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleCreate = useCallback((title: string, content: string) => {
-    const newPacket: Packet = {
-      id: crypto.randomUUID(),
-      title,
-      content,
-      color: "default",
-      pinned: false,
-      createdAt: new Date().toISOString(),
-    };
-    setPackets((prev) => [newPacket, ...prev]);
+  // ─── CREATE ───
+  const handleCreate = useCallback(async (title: string, content: string) => {
+    try {
+      const res = await fetch("/api/packets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, content, color: "default" }),
+      });
+      const data = await res.json();
+      if (data.packet) {
+        setPackets((prev) => [data.packet, ...prev]);
+      }
+    } catch (err) {
+      console.error("Failed to create packet:", err);
+    }
   }, []);
 
-  const handleDelete = useCallback((id: string) => {
+  // ─── DELETE ───
+  const handleDelete = useCallback(async (id: string) => {
+    // Optimistic delete
     setPackets((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await fetch("/api/packets", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+    } catch (err) {
+      console.error("Failed to delete packet:", err);
+    }
   }, []);
 
-  const handleUpdate = useCallback(
-    (id: string, data: Partial<Packet>) => {
-      setPackets((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, ...data } : p))
-      );
-    },
-    []
-  );
-
-  const handlePin = useCallback((id: string) => {
+  // ─── UPDATE ───
+  const handleUpdate = useCallback(async (id: string, data: Partial<Packet>) => {
+    // Optimistic update
     setPackets((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, pinned: !p.pinned } : p))
+      prev.map((p) => (p.id === id ? { ...p, ...data } : p))
     );
+    try {
+      await fetch("/api/packets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...data }),
+      });
+    } catch (err) {
+      console.error("Failed to update packet:", err);
+    }
   }, []);
+
+  // ─── PIN/UNPIN ───
+  const handlePin = useCallback(async (id: string) => {
+    const packet = packets.find((p) => p.id === id);
+    if (!packet) return;
+
+    const newPinned = !packet.pinned;
+    setPackets((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, pinned: newPinned } : p))
+    );
+    try {
+      await fetch("/api/packets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, pinned: newPinned }),
+      });
+    } catch (err) {
+      console.error("Failed to pin packet:", err);
+    }
+  }, [packets]);
 
   const handleLogout = async () => {
     await fetch("/api/logout", { method: "POST" });
@@ -139,8 +121,6 @@ export default function DashboardPage() {
 
   const pinned = packets.filter((p) => p.pinned);
   const unpinned = packets.filter((p) => !p.pinned);
-
-  // Get user initial for avatar
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
   return (
@@ -195,18 +175,8 @@ export default function DashboardPage() {
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     Sign out
                   </button>
@@ -221,58 +191,73 @@ export default function DashboardPage() {
       <main className="relative z-10 max-w-4xl mx-auto px-6 py-8">
         <CreatePacketBar onCreate={handleCreate} />
 
-        {/* Pinned section */}
-        {pinned.length > 0 && (
-          <div className="mb-8">
-            <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest mb-3 px-1">
-              Pinned
-            </p>
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-              <AnimatePresence>
-                {pinned.map((packet) => (
-                  <PacketCard
-                    key={packet.id}
-                    packet={packet}
-                    onDelete={handleDelete}
-                    onUpdate={handleUpdate}
-                    onPin={handlePin}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-
-        {/* Others */}
-        {unpinned.length > 0 && (
-          <div>
-            {pinned.length > 0 && (
-              <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest mb-3 px-1">
-                Others
-              </p>
-            )}
-            <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
-              <AnimatePresence>
-                {unpinned.map((packet) => (
-                  <PacketCard
-                    key={packet.id}
-                    packet={packet}
-                    onDelete={handleDelete}
-                    onUpdate={handleUpdate}
-                    onPin={handlePin}
-                  />
-                ))}
-              </AnimatePresence>
-            </div>
-          </div>
-        )}
-
-        {packets.length === 0 && (
+        {loading ? (
           <div className="text-center py-20">
-            <p className="text-zinc-600 text-sm">
-              No packets yet. Start by taking a note above.
-            </p>
+            <div className="inline-flex items-center gap-2 text-zinc-500 text-sm">
+              <motion.div
+                className="w-4 h-4 border-2 border-zinc-600 border-t-teal-500 rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+              Loading your packets...
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Pinned section */}
+            {pinned.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest mb-3 px-1">
+                  Pinned
+                </p>
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+                  <AnimatePresence>
+                    {pinned.map((packet) => (
+                      <PacketCard
+                        key={packet.id}
+                        packet={packet}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                        onPin={handlePin}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {/* Others */}
+            {unpinned.length > 0 && (
+              <div>
+                {pinned.length > 0 && (
+                  <p className="text-[10px] font-medium text-zinc-600 uppercase tracking-widest mb-3 px-1">
+                    Others
+                  </p>
+                )}
+                <div className="columns-1 sm:columns-2 lg:columns-3 gap-4">
+                  <AnimatePresence>
+                    {unpinned.map((packet) => (
+                      <PacketCard
+                        key={packet.id}
+                        packet={packet}
+                        onDelete={handleDelete}
+                        onUpdate={handleUpdate}
+                        onPin={handlePin}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
+            {packets.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-zinc-600 text-sm">
+                  No packets yet. Start by taking a note above.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

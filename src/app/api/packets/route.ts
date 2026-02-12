@@ -1,55 +1,70 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAccessToken, COOKIE_NAME } from "@/lib/auth";
+import { getPackets, addPacket, updatePacket, deletePacket } from "@/lib/packets";
 
-// ─── Stub API for Packets ───
-// In production, these would read/write to Vercel Postgres.
-// For now, they return mock responses so the UI is testable.
-
+/**
+ * GET /api/packets — Fetch all packets for the authenticated user.
+ */
 export async function GET(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await verifyAccessToken(token);
-  if (!user) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  // TODO: Replace with Postgres query
-  // const packets = await sql`SELECT * FROM packets WHERE user_email = ${user.email} ORDER BY pinned DESC, updated_at DESC`;
-
-  return NextResponse.json({ packets: [], email: user.email });
+  const packets = getPackets(user.email);
+  return NextResponse.json({ packets, email: user.email });
 }
 
+/**
+ * POST /api/packets — Create a new packet.
+ */
 export async function POST(req: NextRequest) {
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const user = await verifyAccessToken(token);
-  if (!user) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-  }
+  if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
   const { title, content, color } = await req.json();
+  const packet = addPacket(user.email, title || "", content || "", color || "default");
+  return NextResponse.json({ packet }, { status: 201 });
+}
 
-  // TODO: Replace with Postgres insert
-  // const result = await sql`
-  //   INSERT INTO packets (user_email, title, content, color)
-  //   VALUES (${user.email}, ${title}, ${content}, ${color || 'default'})
-  //   RETURNING *
-  // `;
+/**
+ * PATCH /api/packets — Update an existing packet.
+ */
+export async function PATCH(req: NextRequest) {
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const mockPacket = {
-    id: crypto.randomUUID(),
-    title,
-    content,
-    color: color || "default",
-    pinned: false,
-    createdAt: new Date().toISOString(),
-  };
+  const user = await verifyAccessToken(token);
+  if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  return NextResponse.json({ packet: mockPacket }, { status: 201 });
+  const { id, ...data } = await req.json();
+  if (!id) return NextResponse.json({ error: "Missing packet id" }, { status: 400 });
+
+  const packet = updatePacket(user.email, id, data);
+  if (!packet) return NextResponse.json({ error: "Packet not found" }, { status: 404 });
+
+  return NextResponse.json({ packet });
+}
+
+/**
+ * DELETE /api/packets — Delete a packet.
+ */
+export async function DELETE(req: NextRequest) {
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const user = await verifyAccessToken(token);
+  if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: "Missing packet id" }, { status: 400 });
+
+  const success = deletePacket(user.email, id);
+  if (!success) return NextResponse.json({ error: "Packet not found" }, { status: 404 });
+
+  return NextResponse.json({ deleted: true });
 }
