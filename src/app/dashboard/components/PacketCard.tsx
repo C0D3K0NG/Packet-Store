@@ -55,7 +55,7 @@ interface PacketCardProps {
   onPin: (id: string) => void;
   isBlurMode?: boolean;
   fontStyle?: "sans" | "mono";
-  variant?: "glass" | "solid" | "outline";
+  variant?: "glass" | "solid" | "outline" | "brutal" | "ghost";
   density?: "comfortable" | "compact";
 }
 
@@ -124,6 +124,14 @@ export default function PacketCard({
     // Minimal border, no background (unless hovered)
     variantClasses = `border border-zinc-700 bg-transparent hover:border-zinc-500 hover:bg-white/5`;
     if (packet.color !== "default") variantClasses = `border ${color.border} bg-transparent hover:bg-white/5`;
+  } else if (variant === "brutal") {
+    // Neo-brutalism: Thick border, Hard Shadow, Full Opacity
+    variantClasses = `border-2 border-zinc-950 bg-zinc-800 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-5`; // extra margin for shadow
+    if (packet.color !== "default") variantClasses = `border-2 border-zinc-950 ${color.bg} shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mb-5 contrast-125`;
+  } else if (variant === "ghost") {
+    // Low opacity until hover
+    variantClasses = `border border-transparent bg-white/5 opacity-60 hover:opacity-100 hover:bg-white/10 hover:border-white/10`;
+    if (packet.color !== "default") variantClasses = `border border-transparent ${color.bg} opacity-50 hover:opacity-100 hover:border-${color.border}`;
   }
 
   return (
@@ -133,7 +141,7 @@ export default function PacketCard({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ y: -2 }}
+      whileHover={variant === "brutal" ? {} : { y: -2 }} // Disable float for brutal (it has its own movement)
       className={`${baseClasses} ${variantClasses} ${paddingClass}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >

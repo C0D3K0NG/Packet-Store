@@ -35,8 +35,8 @@ export default function DashboardPage() {
   const [fontStyle, setFontStyle] = useState<'sans' | 'mono'>('sans');
 
   /* APPEARANCE STATE */
-  const [theme, setTheme] = useState<"aurora" | "neon" | "velvet">("aurora");
-  const [cardVariant, setCardVariant] = useState<"glass" | "solid" | "outline">("glass");
+  const [theme, setTheme] = useState<"aurora" | "neon" | "velvet" | "ocean" | "sunset" | "matrix" | "monochrome">("aurora");
+  const [cardVariant, setCardVariant] = useState<"glass" | "solid" | "outline" | "brutal" | "ghost">("glass");
   const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
 
   // ─── Fetch packets from API on mount ───
@@ -164,10 +164,19 @@ export default function DashboardPage() {
   const unpinned = filteredPackets.filter((p) => !p.pinned);
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
+  // Dynamic Base BG Color
+  const getBaseBgColor = () => {
+    if (theme === "neon") return "bg-[#050505]";
+    if (theme === "velvet") return "bg-[#0a0505]";
+    if (theme === "ocean") return "bg-[#000810]";
+    if (theme === "sunset") return "bg-[#0f0505]";
+    if (theme === "matrix") return "bg-[#000500]";
+    if (theme === "monochrome") return "bg-black";
+    return "bg-zinc-950"; // Aurora
+  };
+
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${theme === "neon" ? "bg-[#050505]" :
-        theme === "velvet" ? "bg-[#0a0505]" : "bg-zinc-950"
-      }`}>
+    <div className={`min-h-screen transition-colors duration-500 ${getBaseBgColor()}`}>
       {/* Dynamic Background */}
       <AuraBackground theme={theme} />
 
@@ -189,7 +198,9 @@ export default function DashboardPage() {
         {/* Search Bar */}
         <div className="flex-1 max-w-lg">
           <div className="relative group">
-            <div className={`absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none transition-colors ${theme === "neon" ? "text-fuchsia-500" : "text-zinc-500 group-focus-within:text-teal-500"
+            <div className={`absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none transition-colors ${theme === "neon" ? "text-fuchsia-500" :
+                theme === "matrix" ? "text-green-500" :
+                  "text-zinc-500 group-focus-within:text-teal-500"
               }`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -200,9 +211,9 @@ export default function DashboardPage() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900 focus:text-white transition-all outline-none ${theme === "neon"
-                  ? "focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/20"
-                  : "focus:border-white/20 focus:ring-1 focus:ring-white/10"
+              className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900 focus:text-white transition-all outline-none ${theme === "neon" ? "focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/20" :
+                  theme === "matrix" ? "focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20" :
+                    "focus:border-white/20 focus:ring-1 focus:ring-white/10"
                 }`}
             />
           </div>
@@ -228,24 +239,28 @@ export default function DashboardPage() {
                   initial={{ opacity: 0, scale: 0.95, y: 4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: 4 }}
-                  className="absolute right-0 top-10 w-64 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-4 z-50 glass-panel"
+                  className="absolute right-0 top-10 w-72 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-4 z-50 glass-panel"
                 >
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {/* Theme Section */}
                     <div>
                       <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Theme</h4>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-4 gap-2">
                         {[
                           { id: "aurora", bg: "bg-teal-500" },
                           { id: "neon", bg: "bg-fuchsia-600" },
-                          { id: "velvet", bg: "bg-rose-900" }
+                          { id: "velvet", bg: "bg-rose-900" },
+                          { id: "ocean", bg: "bg-blue-600" },
+                          { id: "sunset", bg: "bg-orange-500" },
+                          { id: "matrix", bg: "bg-green-600" },
+                          { id: "monochrome", bg: "bg-zinc-400" },
                         ].map(t => (
                           <button
                             key={t.id}
                             onClick={() => setTheme(t.id as any)}
                             className={`h-8 rounded-lg border flex items-center justify-center transition-all ${theme === t.id
-                                ? "border-white/40 ring-2 ring-white/10"
-                                : "border-transparent opacity-60 hover:opacity-100"
+                                ? "border-white/40 ring-2 ring-white/10 scale-110"
+                                : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
                               } ${t.bg}`}
                             title={t.id}
                           />
@@ -256,12 +271,12 @@ export default function DashboardPage() {
                     {/* Card Style */}
                     <div>
                       <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Card Style</h4>
-                      <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/5">
-                        {["glass", "solid", "outline"].map(v => (
+                      <div className="grid grid-cols-3 gap-1 bg-zinc-950 rounded-lg p-1 border border-white/5">
+                        {["glass", "solid", "outline", "brutal", "ghost"].map(v => (
                           <button
                             key={v}
                             onClick={() => setCardVariant(v as any)}
-                            className={`flex-1 py-1 text-xs rounded-md capitalize transition-all ${cardVariant === v ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+                            className={`py-1.5 text-[10px] sm:text-xs rounded-md capitalize transition-all ${cardVariant === v ? "bg-white/10 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"
                               }`}
                           >
                             {v}
@@ -276,7 +291,7 @@ export default function DashboardPage() {
                       <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/5">
                         {[
                           { id: "comfortable", icon: "M4 6h16M4 12h16M4 18h16" },
-                          { id: "compact", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" }
+                          { id: "compact", icon: "M4 10h16M4 14h16M4 18h16" }
                         ].map(d => (
                           <button
                             key={d.id}
@@ -304,7 +319,9 @@ export default function DashboardPage() {
               onClick={() => setShowMenu(!showMenu)}
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-zinc-950 cursor-pointer hover:shadow-lg transition-shadow ${theme === "neon" ? "bg-gradient-to-br from-fuchsia-500 to-cyan-500 shadow-fuchsia-500/20" :
                   theme === "velvet" ? "bg-gradient-to-br from-rose-500 to-indigo-500 shadow-rose-500/20" :
-                    "bg-gradient-to-br from-teal-500 to-cyan-500 shadow-teal-500/20"
+                    theme === "matrix" ? "bg-gradient-to-br from-green-500 to-emerald-500 shadow-green-500/20" :
+                      theme === "monochrome" ? "bg-gradient-to-br from-zinc-300 to-zinc-500 shadow-white/10" :
+                        "bg-gradient-to-br from-teal-500 to-cyan-500 shadow-teal-500/20"
                 }`}
               title={userEmail}
             >
