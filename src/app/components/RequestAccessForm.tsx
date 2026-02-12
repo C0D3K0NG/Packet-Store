@@ -142,8 +142,8 @@ export default function RequestAccessForm() {
           /* ═══ OTP INPUT ═══ */
         ) : step === "otp" || (step === "error" && otp.some((d) => d)) ? (
           <motion.div key="otp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-center">
-            <p className="text-zinc-400 text-sm mb-1">Enter the 6-digit access code</p>
-            <p className="text-zinc-500 text-xs mb-5">Ask the admin for the code sent to their email</p>
+            <p className="text-zinc-400 text-sm mb-1">Enter the 6-digit verification code</p>
+            <p className="text-zinc-500 text-xs mb-5">Check your email for the code we just sent</p>
 
             <form onSubmit={handleOtpSubmit} className="flex flex-col items-center gap-5">
               <div className="flex gap-2.5" onPaste={handleOtpPaste}>

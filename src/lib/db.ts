@@ -55,4 +55,14 @@ export async function initDb() {
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS otp_codes (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      otp VARCHAR(6) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      expires_at TIMESTAMP NOT NULL
+    )
+  `);
 }

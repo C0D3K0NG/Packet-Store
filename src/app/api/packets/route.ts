@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const user = await verifyAccessToken(token);
   if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-  const packets = getPackets(user.email);
+  const packets = await getPackets(user.email);
   return NextResponse.json({ packets, email: user.email });
 }
 
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
   const { title, content, color } = await req.json();
-  const packet = addPacket(user.email, title || "", content || "", color || "default");
+  const packet = await addPacket(user.email, title || "", content || "", color || "default");
   return NextResponse.json({ packet }, { status: 201 });
 }
 
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest) {
   const { id, ...data } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing packet id" }, { status: 400 });
 
-  const packet = updatePacket(user.email, id, data);
+  const packet = await updatePacket(user.email, id, data);
   if (!packet) return NextResponse.json({ error: "Packet not found" }, { status: 404 });
 
   return NextResponse.json({ packet });
@@ -63,7 +63,7 @@ export async function DELETE(req: NextRequest) {
   const { id } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing packet id" }, { status: 400 });
 
-  const success = deletePacket(user.email, id);
+  const success = await deletePacket(user.email, id);
   if (!success) return NextResponse.json({ error: "Packet not found" }, { status: 404 });
 
   return NextResponse.json({ deleted: true });

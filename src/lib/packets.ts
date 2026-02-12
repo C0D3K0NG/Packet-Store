@@ -1,8 +1,9 @@
 /**
- * In-memory packet storage.
- * Packets are stored per-user (keyed by email).
- * Persists while the server is running — resets on restart.
+ * Packet storage — PostgreSQL-backed.
+ * All packets are scoped to user_email so each email sees only their own data.
  */
+
+import { query, initDb } from "./db";
 
 export interface Packet {
   id: string;
@@ -14,74 +15,114 @@ export interface Packet {
   updatedAt: string;
 }
 
-// user email → packets
-const store: Map<string, Packet[]> = new Map();
+// Ensure tables exist on first import
+let dbReady: Promise<void> | null = null;
+function ensureDb() {
+  if (!dbReady) dbReady = initDb();
+  return dbReady;
+}
 
-function getUserPackets(email: string): Packet[] {
-  if (!store.has(email)) {
-    store.set(email, []);
-  }
-  return store.get(email)!;
+/** Map a DB row to a Packet object. */
+function rowToPacket(row: Record<string, unknown>): Packet {
+  return {
+    id: row.id as string,
+    title: (row.title as string) || "",
+    content: (row.content as string) || "",
+    color: (row.color as string) || "default",
+    pinned: row.pinned as boolean,
+    createdAt: (row.created_at as Date).toISOString(),
+    updatedAt: (row.updated_at as Date).toISOString(),
+  };
 }
 
 /**
- * Get all packets for a user, sorted: pinned first, then by updatedAt desc.
+ * Get all packets for a user, sorted: pinned first, then by updated_at desc.
  */
-export function getPackets(email: string): Packet[] {
-  const packets = getUserPackets(email);
-  return [...packets].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-  });
+export async function getPackets(email: string): Promise<Packet[]> {
+  await ensureDb();
+  const result = await query(
+    `SELECT * FROM packets
+     WHERE user_email = $1
+     ORDER BY pinned DESC, updated_at DESC`,
+    [email]
+  );
+  return result.rows.map(rowToPacket);
 }
 
 /**
  * Create a new packet.
  */
-export function addPacket(email: string, title: string, content: string, color: string): Packet {
-  const packets = getUserPackets(email);
-  const now = new Date().toISOString();
-  const packet: Packet = {
-    id: crypto.randomUUID(),
-    title,
-    content,
-    color,
-    pinned: false,
-    createdAt: now,
-    updatedAt: now,
-  };
-  packets.unshift(packet);
-  return packet;
+export async function addPacket(
+  email: string,
+  title: string,
+  content: string,
+  color: string
+): Promise<Packet> {
+  await ensureDb();
+  const result = await query(
+    `INSERT INTO packets (user_email, title, content, color)
+     VALUES ($1, $2, $3, $4)
+     RETURNING *`,
+    [email, title, content, color]
+  );
+  return rowToPacket(result.rows[0]);
 }
 
 /**
- * Update a packet by id.
+ * Update a packet by id (only if it belongs to the user).
  */
-export function updatePacket(
+export async function updatePacket(
   email: string,
   id: string,
   data: Partial<Pick<Packet, "title" | "content" | "color" | "pinned">>
-): Packet | null {
-  const packets = getUserPackets(email);
-  const packet = packets.find((p) => p.id === id);
-  if (!packet) return null;
+): Promise<Packet | null> {
+  await ensureDb();
 
-  if (data.title !== undefined) packet.title = data.title;
-  if (data.content !== undefined) packet.content = data.content;
-  if (data.color !== undefined) packet.color = data.color;
-  if (data.pinned !== undefined) packet.pinned = data.pinned;
-  packet.updatedAt = new Date().toISOString();
+  // Build dynamic SET clause
+  const fields: string[] = [];
+  const values: unknown[] = [];
+  let idx = 1;
 
-  return packet;
+  if (data.title !== undefined) {
+    fields.push(`title = $${idx++}`);
+    values.push(data.title);
+  }
+  if (data.content !== undefined) {
+    fields.push(`content = $${idx++}`);
+    values.push(data.content);
+  }
+  if (data.color !== undefined) {
+    fields.push(`color = $${idx++}`);
+    values.push(data.color);
+  }
+  if (data.pinned !== undefined) {
+    fields.push(`pinned = $${idx++}`);
+    values.push(data.pinned);
+  }
+
+  if (fields.length === 0) return null;
+
+  fields.push(`updated_at = NOW()`);
+
+  const result = await query(
+    `UPDATE packets SET ${fields.join(", ")}
+     WHERE id = $${idx++} AND user_email = $${idx}
+     RETURNING *`,
+    [...values, id, email]
+  );
+
+  if (result.rows.length === 0) return null;
+  return rowToPacket(result.rows[0]);
 }
 
 /**
- * Delete a packet by id.
+ * Delete a packet by id (only if it belongs to the user).
  */
-export function deletePacket(email: string, id: string): boolean {
-  const packets = getUserPackets(email);
-  const idx = packets.findIndex((p) => p.id === id);
-  if (idx === -1) return false;
-  packets.splice(idx, 1);
-  return true;
+export async function deletePacket(email: string, id: string): Promise<boolean> {
+  await ensureDb();
+  const result = await query(
+    `DELETE FROM packets WHERE id = $1 AND user_email = $2`,
+    [id, email]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
