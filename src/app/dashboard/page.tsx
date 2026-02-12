@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import PacketCard from "./components/PacketCard";
 import CreatePacketBar from "./components/CreatePacketBar";
+import AuraBackground from "../components/AuraBackground";
 import { useToast } from "@/app/context/ToastContext";
 
 interface Packet {
@@ -21,8 +22,10 @@ export default function DashboardPage() {
   const [packets, setPackets] = useState<Packet[]>([]);
   const [userEmail, setUserEmail] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [showAppearance, setShowAppearance] = useState(false);
   const [loading, setLoading] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
+  const appearanceRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
   /* VIEW STATE */
@@ -30,6 +33,11 @@ export default function DashboardPage() {
   const [isGridView, setIsGridView] = useState(true);
   const [isBlurMode, setIsBlurMode] = useState(false);
   const [fontStyle, setFontStyle] = useState<'sans' | 'mono'>('sans');
+
+  /* APPEARANCE STATE */
+  const [theme, setTheme] = useState<"aurora" | "neon" | "velvet">("aurora");
+  const [cardVariant, setCardVariant] = useState<"glass" | "solid" | "outline">("glass");
+  const [density, setDensity] = useState<"comfortable" | "compact">("comfortable");
 
   // ─── Fetch packets from API on mount ───
   useEffect(() => {
@@ -46,11 +54,14 @@ export default function DashboardPage() {
       });
   }, [toast]);
 
-  // Close menu on outside click
+  // Close menus on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false);
+      }
+      if (appearanceRef.current && !appearanceRef.current.contains(e.target as Node)) {
+        setShowAppearance(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -154,11 +165,11 @@ export default function DashboardPage() {
   const initial = userEmail ? userEmail.charAt(0).toUpperCase() : "?";
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      {/* Subtle background */}
-      <div className="fixed inset-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-[300px] w-[500px] rounded-full bg-teal-500/5 blur-[100px]" />
-      </div>
+    <div className={`min-h-screen transition-colors duration-500 ${theme === "neon" ? "bg-[#050505]" :
+        theme === "velvet" ? "bg-[#0a0505]" : "bg-zinc-950"
+      }`}>
+      {/* Dynamic Background */}
+      <AuraBackground theme={theme} />
 
       {/* Navbar */}
       <nav className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-zinc-950/80 backdrop-blur-xl gap-4">
@@ -178,7 +189,8 @@ export default function DashboardPage() {
         {/* Search Bar */}
         <div className="flex-1 max-w-lg">
           <div className="relative group">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-500 group-focus-within:text-teal-500 transition-colors">
+            <div className={`absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none transition-colors ${theme === "neon" ? "text-fuchsia-500" : "text-zinc-500 group-focus-within:text-teal-500"
+              }`}>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
@@ -188,50 +200,147 @@ export default function DashboardPage() {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900 focus:border-white/20 focus:text-white transition-all outline-none focus:ring-1 focus:ring-white/10"
+              className={`w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-zinc-200 placeholder:text-zinc-600 focus:bg-zinc-900 focus:text-white transition-all outline-none ${theme === "neon"
+                  ? "focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/20"
+                  : "focus:border-white/20 focus:ring-1 focus:ring-white/10"
+                }`}
             />
           </div>
         </div>
 
-        {/* Avatar with dropdown */}
-        <div className="relative shrink-0" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-sm font-bold text-zinc-950 cursor-pointer hover:shadow-lg hover:shadow-teal-500/20 transition-shadow"
-            title={userEmail}
-          >
-            {initial}
-          </button>
+        {/* Appearance & User Menu */}
+        <div className="flex items-center gap-2">
+          {/* Appearance Menu Toggle */}
+          <div className="relative" ref={appearanceRef}>
+            <button
+              onClick={() => setShowAppearance(!showAppearance)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+              title="Appearance"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </button>
 
-          <AnimatePresence>
-            {showMenu && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 top-10 w-56 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl shadow-black/40 overflow-hidden"
-              >
-                <div className="px-4 py-3 border-b border-white/5">
-                  <p className="text-xs text-zinc-500">Signed in as</p>
-                  <p className="text-sm text-zinc-200 truncate font-medium mt-0.5">
-                    {userEmail || "Loading..."}
-                  </p>
-                </div>
-                <div className="p-1.5">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Sign out
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+            <AnimatePresence>
+              {showAppearance && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                  className="absolute right-0 top-10 w-64 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl p-4 z-50 glass-panel"
+                >
+                  <div className="space-y-4">
+                    {/* Theme Section */}
+                    <div>
+                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Theme</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: "aurora", bg: "bg-teal-500" },
+                          { id: "neon", bg: "bg-fuchsia-600" },
+                          { id: "velvet", bg: "bg-rose-900" }
+                        ].map(t => (
+                          <button
+                            key={t.id}
+                            onClick={() => setTheme(t.id as any)}
+                            className={`h-8 rounded-lg border flex items-center justify-center transition-all ${theme === t.id
+                                ? "border-white/40 ring-2 ring-white/10"
+                                : "border-transparent opacity-60 hover:opacity-100"
+                              } ${t.bg}`}
+                            title={t.id}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Card Style */}
+                    <div>
+                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Card Style</h4>
+                      <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/5">
+                        {["glass", "solid", "outline"].map(v => (
+                          <button
+                            key={v}
+                            onClick={() => setCardVariant(v as any)}
+                            className={`flex-1 py-1 text-xs rounded-md capitalize transition-all ${cardVariant === v ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+                              }`}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Density */}
+                    <div>
+                      <h4 className="text-[10px] uppercase font-bold text-zinc-600 mb-2">Density</h4>
+                      <div className="flex bg-zinc-950 rounded-lg p-1 border border-white/5">
+                        {[
+                          { id: "comfortable", icon: "M4 6h16M4 12h16M4 18h16" },
+                          { id: "compact", icon: "M4 6h16M4 10h16M4 14h16M4 18h16" }
+                        ].map(d => (
+                          <button
+                            key={d.id}
+                            onClick={() => setDensity(d.id as any)}
+                            className={`flex-1 py-1 text-xs rounded-md flex items-center justify-center transition-all ${density === d.id ? "bg-white/10 text-white" : "text-zinc-500 hover:text-zinc-300"
+                              }`}
+                            title={d.id}
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d={d.icon} />
+                            </svg>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* User Avatar */}
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-zinc-950 cursor-pointer hover:shadow-lg transition-shadow ${theme === "neon" ? "bg-gradient-to-br from-fuchsia-500 to-cyan-500 shadow-fuchsia-500/20" :
+                  theme === "velvet" ? "bg-gradient-to-br from-rose-500 to-indigo-500 shadow-rose-500/20" :
+                    "bg-gradient-to-br from-teal-500 to-cyan-500 shadow-teal-500/20"
+                }`}
+              title={userEmail}
+            >
+              {initial}
+            </button>
+
+            <AnimatePresence>
+              {showMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-10 w-56 rounded-xl bg-zinc-900 border border-white/10 shadow-2xl shadow-black/40 overflow-hidden z-50"
+                >
+                  <div className="px-4 py-3 border-b border-white/5">
+                    <p className="text-xs text-zinc-500">Signed in as</p>
+                    <p className="text-sm text-zinc-200 truncate font-medium mt-0.5">
+                      {userEmail || "Loading..."}
+                    </p>
+                  </div>
+                  <div className="p-1.5">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Sign out
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </nav>
 
@@ -250,8 +359,8 @@ export default function DashboardPage() {
                   <button
                     onClick={() => setSearchQuery("")}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap ${searchQuery === ""
-                        ? "bg-white/10 text-white border-white/20"
-                        : "bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10 hover:text-zinc-300"
+                      ? "bg-white/10 text-white border-white/20"
+                      : "bg-white/5 text-zinc-500 border-white/5 hover:bg-white/10 hover:text-zinc-300"
                       }`}
                   >
                     All
@@ -262,8 +371,8 @@ export default function DashboardPage() {
                     key={tag}
                     onClick={() => setSearchQuery(tag)}
                     className={`text-xs px-2.5 py-1 rounded-full border transition-colors whitespace-nowrap cursor-pointer ${searchQuery === tag
-                        ? "bg-teal-500/20 text-teal-300 border-teal-500/30"
-                        : "bg-white/5 text-zinc-400 border-white/5 hover:bg-white/10 hover:text-zinc-200"
+                      ? "bg-teal-500/20 text-teal-300 border-teal-500/30"
+                      : "bg-white/5 text-zinc-400 border-white/5 hover:bg-white/10 hover:text-zinc-200"
                       }`}
                   >
                     {tag}
@@ -357,6 +466,8 @@ export default function DashboardPage() {
                         onPin={handlePin}
                         isBlurMode={isBlurMode}
                         fontStyle={fontStyle}
+                        variant={cardVariant}
+                        density={density}
                       />
                     ))}
                   </AnimatePresence>
@@ -384,6 +495,8 @@ export default function DashboardPage() {
                         onPin={handlePin}
                         isBlurMode={isBlurMode}
                         fontStyle={fontStyle}
+                        variant={cardVariant}
+                        density={density}
                       />
                     ))}
                   </AnimatePresence>

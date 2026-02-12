@@ -6,7 +6,8 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center px-6">
       {/* Background layers */}
-      <AuraBackground />
+      {/* Background layers */}
+      <AuraBackground theme="aurora" />
       <MovingLights />
 
       {/* Content */}

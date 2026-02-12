@@ -55,6 +55,8 @@ interface PacketCardProps {
   onPin: (id: string) => void;
   isBlurMode?: boolean;
   fontStyle?: "sans" | "mono";
+  variant?: "glass" | "solid" | "outline";
+  density?: "comfortable" | "compact";
 }
 
 export default function PacketCard({
@@ -64,6 +66,8 @@ export default function PacketCard({
   onPin,
   isBlurMode = false,
   fontStyle = "sans",
+  variant = "glass",
+  density = "comfortable",
 }: PacketCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(packet.title);
@@ -100,6 +104,28 @@ export default function PacketCard({
     ? formatDistanceToNow(new Date(packet.updatedAt || packet.createdAt), { addSuffix: true })
     : "";
 
+  // ─── STYLE CALCULATIONS ───
+  const baseClasses = "group relative rounded-xl transition-all duration-200 cursor-pointer break-inside-avoid mb-4 flex flex-col";
+
+  // Padding & Height based on Density
+  const paddingClass = density === "compact" ? "p-3" : "p-4";
+  const minHeightClass = density === "compact" ? "min-h-[80px]" : "min-h-[100px]";
+
+  // Variant Styles
+  let variantClasses = "";
+  if (variant === "glass") {
+    // Current style: Border + Transparent BG
+    variantClasses = `border ${color.border} ${color.bg}`;
+  } else if (variant === "solid") {
+    // Opaque, higher contrast
+    variantClasses = `border border-transparent bg-zinc-800 text-zinc-100 hover:bg-zinc-750`;
+    if (packet.color !== "default") variantClasses = `border border-transparent ${color.bg} brightness-110`;
+  } else if (variant === "outline") {
+    // Minimal border, no background (unless hovered)
+    variantClasses = `border border-zinc-700 bg-transparent hover:border-zinc-500 hover:bg-white/5`;
+    if (packet.color !== "default") variantClasses = `border ${color.border} bg-transparent hover:bg-white/5`;
+  }
+
   return (
     <motion.div
       ref={cardRef}
@@ -108,11 +134,12 @@ export default function PacketCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -2 }}
-      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 transition-colors duration-200 cursor-pointer break-inside-avoid mb-4 flex flex-col`}
+      className={`${baseClasses} ${variantClasses} ${paddingClass}`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
       {/* Pattern Overlay - Clipped specifically to rounded corners */}
-      {(color as any).pattern && (
+      {/* Only show pattern in glass or solid mode, maybe optional in outline? Let's hide in outline for minimalism */}
+      {(color as any).pattern && variant !== "outline" && (
         <div
           className="absolute inset-0 pointer-events-none opacity-40 z-0 rounded-xl overflow-hidden"
           style={{
