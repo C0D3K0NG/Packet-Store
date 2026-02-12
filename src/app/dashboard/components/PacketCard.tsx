@@ -108,13 +108,13 @@ export default function PacketCard({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ y: -2 }}
-      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 transition-colors duration-200 cursor-pointer break-inside-avoid mb-4 flex flex-col overflow-hidden`}
+      className={`group relative rounded-xl border ${color.border} ${color.bg} p-4 transition-colors duration-200 cursor-pointer break-inside-avoid mb-4 flex flex-col`}
       onClick={() => !isEditing && setIsEditing(true)}
     >
-      {/* Pattern Overlay */}
+      {/* Pattern Overlay - Clipped specifically to rounded corners */}
       {(color as any).pattern && (
         <div
-          className="absolute inset-0 pointer-events-none opacity-40 z-0"
+          className="absolute inset-0 pointer-events-none opacity-40 z-0 rounded-xl overflow-hidden"
           style={{
             backgroundImage: (color as any).pattern,
             backgroundSize: (color as any).bgSize
@@ -147,7 +147,7 @@ export default function PacketCard({
         )}
 
         {/* Content */}
-        <div className={`flex-1 min-h-[60px] text-sm text-zinc-300 transition-all duration-300 ${fontStyle === "mono" ? "font-mono" : "font-sans"
+        <div className={`flex-1 min-h-[100px] text-sm text-zinc-300 transition-all duration-300 ${fontStyle === "mono" ? "font-mono" : "font-sans"
           } ${isBlurMode && !isEditing ? "blur-md hover:blur-none transition-all duration-500" : ""}`}>
           {isEditing ? (
             <textarea
