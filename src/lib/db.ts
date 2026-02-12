@@ -70,4 +70,13 @@ export async function initDb() {
       expires_at TIMESTAMP NOT NULL
     )
   `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      email VARCHAR(255) PRIMARY KEY,
+      theme VARCHAR(20) DEFAULT 'aurora',
+      card_style VARCHAR(20) DEFAULT 'glass',
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
 }

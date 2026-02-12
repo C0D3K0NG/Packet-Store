@@ -18,7 +18,7 @@ export interface UserSettings {
 export async function getUserSettings(email: string): Promise<UserSettings> {
   await ensureDb();
   const result = await query(
-    `SELECT theme, card_style FROM authorized_users WHERE email = $1`,
+    `SELECT theme, card_style FROM user_preferences WHERE email = $1`,
     [email]
   );
 
@@ -34,29 +34,23 @@ export async function getUserSettings(email: string): Promise<UserSettings> {
 }
 
 /**
- * Update user settings.
+ * Update user settings (Upsert).
  */
 export async function updateUserSettings(email: string, settings: Partial<UserSettings>): Promise<void> {
   await ensureDb();
 
-  const fields: string[] = [];
-  const values: unknown[] = [];
-  let idx = 1;
+  // We need to handle upsert carefully.
+  // Since we might be updating one field or both, and the row might not exist.
 
-  if (settings.theme) {
-    fields.push(`theme = $${idx++}`);
-    values.push(settings.theme);
-  }
-  if (settings.cardStyle) {
-    fields.push(`card_style = $${idx++}`);
-    values.push(settings.cardStyle);
-  }
+  const current = await getUserSettings(email);
+  const newTheme = settings.theme !== undefined ? settings.theme : current.theme;
+  const newStyle = settings.cardStyle !== undefined ? settings.cardStyle : current.cardStyle;
 
-  if (fields.length === 0) return;
-
-  // We only update existing users because they must be authorized to login
   await query(
-    `UPDATE authorized_users SET ${fields.join(", ")} WHERE email = $${idx}`,
-    [...values, email]
+    `INSERT INTO user_preferences (email, theme, card_style, updated_at)
+     VALUES ($1, $2, $3, NOW())
+     ON CONFLICT (email)
+     DO UPDATE SET theme = $2, card_style = $3, updated_at = NOW()`,
+    [email, newTheme, newStyle]
   );
 }
