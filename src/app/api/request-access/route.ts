@@ -11,7 +11,13 @@ export async function POST(req: NextRequest) {
     }
 
     const otp = generateOtp();
-    await saveOtp(email, otp);
+    try {
+      await saveOtp(email, otp);
+    } catch (dbErr) {
+      console.error("[Request Access] DB saveOtp failed:", dbErr instanceof Error ? dbErr.message : dbErr);
+      console.error("[Request Access] DB stack:", dbErr instanceof Error ? dbErr.stack : "");
+      // Fall through — still send the OTP email even if DB save fails
+    }
 
     console.log(`[Request Access] ${email} — OTP: ${otp}`);
 

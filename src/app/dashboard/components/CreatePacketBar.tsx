@@ -62,6 +62,11 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleSubmit();
+                }
+              }}
               placeholder="Take a note..."
               className="w-full bg-transparent px-4 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 outline-none resize-none min-h-[80px]"
               rows={3}
