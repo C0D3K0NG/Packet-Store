@@ -79,4 +79,9 @@ export async function initDb() {
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `);
+
+  // Migration for sharing
+  await query(`ALTER TABLE packets ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT FALSE`);
+  await query(`ALTER TABLE packets ADD COLUMN IF NOT EXISTS share_token UUID DEFAULT NULL`);
+  await query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_packets_share_token ON packets(share_token) WHERE share_token IS NOT NULL`);
 }
