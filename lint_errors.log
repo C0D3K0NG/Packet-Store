@@ -1,0 +1,30 @@
+
+> temp-packet-store@0.1.0 lint
+> eslint
+
+
+O:\LaunchPad\PROJECTS\Packet-Store\src\app\dashboard\components\PacketCard.tsx
+  112:9   warning  'minHeightClass' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  179:18  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  183:40  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  184:39  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  247:28  warning  'node' is defined but never used                     @typescript-eslint/no-unused-vars
+  247:75  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  272:27  warning  'node' is defined but never used                     @typescript-eslint/no-unused-vars
+  369:24  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  373:46  error    Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+
+O:\LaunchPad\PROJECTS\Packet-Store\src\app\dashboard\page.tsx
+  218:9   warning  'textSecondary' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  317:70  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  335:67  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  357:63  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+O:\LaunchPad\PROJECTS\Packet-Store\src\lib\detectLanguage.ts
+  50:14  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+O:\LaunchPad\PROJECTS\Packet-Store\src\middleware.ts
+  2:10  warning  'verifyAccessToken' is defined but never used  @typescript-eslint/no-unused-vars
+
+Γ£û 15 problems (9 errors, 6 warnings)
+

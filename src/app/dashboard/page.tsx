@@ -215,7 +215,7 @@ export default function DashboardPage() {
 
   // Text Color helpers
   const textPrimary = isLightMode ? "text-zinc-800" : "text-zinc-200";
-  const textSecondary = isLightMode ? "text-zinc-500" : "text-zinc-400";
+  // const textSecondary = isLightMode ? "text-zinc-500" : "text-zinc-400"; // Unused
   const borderLight = isLightMode ? "border-black/5" : "border-white/5";
   const bgSurface = isLightMode ? "bg-white/50" : "bg-zinc-950/80";
 
@@ -314,7 +314,7 @@ export default function DashboardPage() {
                         ].map(t => (
                           <button
                             key={t.id}
-                            onClick={() => handleThemeChange(t.id as any)}
+                            onClick={() => handleThemeChange(t.id as typeof theme)}
                             className={`h-8 rounded-lg border flex items-center justify-center transition-all ${theme === t.id
                               ? "border-white/40 ring-2 ring-white/10 scale-110"
                               : "border-transparent opacity-60 hover:opacity-100 hover:scale-105"
@@ -332,7 +332,7 @@ export default function DashboardPage() {
                         {["glass", "solid", "outline", "brutal", "ghost", "cyber", "neumorph", "pixel", "retro", "glow", "clay", "paper"].map(v => (
                           <button
                             key={v}
-                            onClick={() => handleStyleChange(v as any)}
+                            onClick={() => handleStyleChange(v as typeof cardVariant)}
                             className={`py-1.5 text-[10px] sm:text-xs rounded-md capitalize transition-all ${cardVariant === v
                               ? (isLightMode ? "bg-white text-zinc-900 shadow-sm" : "bg-white/10 text-white shadow-sm")
                               : (isLightMode ? "text-zinc-500 hover:text-zinc-900" : "text-zinc-500 hover:text-zinc-300")
@@ -354,7 +354,7 @@ export default function DashboardPage() {
                         ].map(d => (
                           <button
                             key={d.id}
-                            onClick={() => setDensity(d.id as any)}
+                            onClick={() => setDensity(d.id as typeof density)}
                             className={`flex-1 py-1 text-xs rounded-md flex items-center justify-center transition-all ${density === d.id
                               ? (isLightMode ? "bg-white text-zinc-900 shadow-sm" : "bg-white/10 text-white")
                               : (isLightMode ? "text-zinc-500 hover:text-zinc-900" : "text-zinc-500 hover:text-zinc-300")

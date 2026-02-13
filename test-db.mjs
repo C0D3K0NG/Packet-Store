@@ -8,7 +8,7 @@ try {
   console.log("Tables:", tables.map(r => r.table_name));
 
   // Test the cast approach used in db.ts query()
-  const castSql = sql as unknown as (text: string, params?: unknown[]) => Promise<Record<string, unknown>[]>;
+  const castSql = sql;
   const result = await castSql("SELECT 1 as num", []);
   console.log("Cast query result:", result);
 

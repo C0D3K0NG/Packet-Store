@@ -18,7 +18,16 @@ interface Packet {
   updatedAt?: string; // Optional for now as DB schema has updated_at
 }
 
-const COLORS = [
+
+interface ColorOption {
+  name: string;
+  bg: string;
+  border: string;
+  pattern?: string;
+  bgSize?: string;
+}
+
+const COLORS: ColorOption[] = [
   // Row 1: Solids
   { name: "default", bg: "bg-zinc-800/60", border: "border-zinc-700/50" },
   { name: "teal", bg: "bg-teal-900/30", border: "border-teal-700/30" },
@@ -109,7 +118,7 @@ export default function PacketCard({
 
   // Padding & Height based on Density
   const paddingClass = density === "compact" ? "p-3" : "p-4";
-  const minHeightClass = density === "compact" ? "min-h-[80px]" : "min-h-[100px]";
+  // const minHeightClass = density === "compact" ? "min-h-[80px]" : "min-h-[100px]"; // Unused
 
   // Variant Styles
   let variantClasses = "";
@@ -176,12 +185,12 @@ export default function PacketCard({
     >
       {/* Pattern Overlay - Clipped specifically to rounded corners */}
       {/* Less patterns for minimal styles */}
-      {(color as any).pattern && !["outline", "ghost", "neumorph", "clay"].includes(variant) && (
+      {(color.pattern) && !["outline", "ghost", "neumorph", "clay"].includes(variant) && (
         <div
           className="absolute inset-0 pointer-events-none opacity-40 z-0 rounded-xl overflow-hidden"
           style={{
-            backgroundImage: (color as any).pattern,
-            backgroundSize: (color as any).bgSize
+            backgroundImage: color.pattern,
+            backgroundSize: color.bgSize
           }}
         />
       )}
@@ -244,7 +253,8 @@ export default function PacketCard({
               {packet.content ? (
                 <ReactMarkdown
                   components={{
-                    code({ node, inline, className, children, ...props }: any) {
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    code({ node, inline, className, children, style, ...props }: { node?: unknown, inline?: boolean, className?: string, children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>) {
                       const match = /language-(\w+)/.exec(className || "");
                       return !inline && match ? (
                         <div className="relative group/code">
@@ -269,6 +279,7 @@ export default function PacketCard({
                         </code>
                       );
                     },
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     a: ({ node, ...props }) => (
                       <a className="text-teal-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} onClick={(e) => e.stopPropagation()} />
                     ),
@@ -366,11 +377,11 @@ export default function PacketCard({
                 className={`relative w-6 h-6 rounded-full ${c.bg} border ${c.border} cursor-pointer hover:scale-110 transition-transform ${packet.color === c.name ? "ring-2 ring-white/30" : ""}`}
                 title={c.name}
               >
-                {(c as any).pattern && (
+                {c.pattern && (
                   <div
                     className="absolute inset-0 rounded-full opacity-60"
                     style={{
-                      backgroundImage: (c as any).pattern,
+                      backgroundImage: c.pattern,
                       backgroundSize: "200%"
                     }}
                   />

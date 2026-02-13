@@ -47,7 +47,7 @@ export function detectLanguage(code: string): string | null {
     try {
       JSON.parse(code);
       return "json";
-    } catch (e) {
+    } catch {
       // loose check
     }
   }

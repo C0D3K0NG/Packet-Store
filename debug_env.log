@@ -1,0 +1,15 @@
+CWD: O:\LaunchPad\PROJECTS\Packet-Store
+Checking .env.local at: O:\LaunchPad\PROJECTS\Packet-Store\.env.local Exists: true
+Database URL loaded: NO
+file:///O:/LaunchPad/PROJECTS/Packet-Store/node_modules/@neondatabase/serverless/index.mjs:1270
+authToken:u,disableWarningInBrowsers:c}={}){if(!r)throw new Error("No database connection string was\
+                                                        ^
+
+Error: No database connection string was provided to `neon()`. Perhaps an environment variable has not been set?
+    at neon (file:///O:/LaunchPad/PROJECTS/Packet-Store/node_modules/@neondatabase/serverless/index.mjs:1270:57)
+    at file:///O:/LaunchPad/PROJECTS/Packet-Store/test-db.mjs:29:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:329:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.17.1
