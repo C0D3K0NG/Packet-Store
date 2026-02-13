@@ -9,6 +9,7 @@ import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/app/context/ToastContext";
 import FormattingToolbar from "./FormattingToolbar";
+import SimpleEditor from "./SimpleEditor";
 import { insertFormatting, FormatType } from "@/lib/textUtils";
 
 interface Packet {
@@ -287,7 +288,7 @@ export default function PacketCard({
           {isEditing ? (
             <div className="flex flex-col h-full">
               <FormattingToolbar onFormat={handleFormat} />
-              <textarea
+              <SimpleEditor
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -298,6 +299,8 @@ export default function PacketCard({
                     if (lang) {
                       e.preventDefault();
                       const formatted = "```" + lang + "\n" + text + "\n```";
+                      // SimpleEditor forwards ref to textarea, but e.currentTarget here depends on how event bubbles.
+                      // Actually, onPaste is on textarea, so e.currentTarget IS textarea.
                       const textarea = e.currentTarget;
                       const start = textarea.selectionStart;
                       const end = textarea.selectionEnd;
@@ -310,7 +313,8 @@ export default function PacketCard({
                   });
                 }}
                 placeholder="Take a note..."
-                className={`w-full h-full bg-transparent text-zinc-300 placeholder:text-zinc-500 outline-none resize-none text-xs ${fontStyle === "mono" ? "font-mono" : "font-sans"}`}
+                fontStyle={fontStyle}
+                className="text-xs text-sm" // Base text size mapping 
                 rows={6}
               />
               <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-white/5">

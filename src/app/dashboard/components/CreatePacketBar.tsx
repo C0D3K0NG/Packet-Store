@@ -3,6 +3,7 @@
 import { useState, FormEvent, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import FormattingToolbar from "./FormattingToolbar";
+import SimpleEditor from "./SimpleEditor";
 import { insertFormatting, FormatType } from "@/lib/textUtils";
 
 interface CreatePacketBarProps {
@@ -79,7 +80,7 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
             <div className="px-4 pt-1">
               <FormattingToolbar onFormat={handleFormat} />
             </div>
-            <textarea
+            <SimpleEditor
               ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -89,9 +90,9 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
                 }
               }}
               onPaste={(e) => {
+                // Manually handle paste since SimpleEditor forwards props but logic was inline
                 const text = e.clipboardData.getData("text");
-                // Lazy import or just use the imported function
-                // We'll trust the import is added at the top or we add it now
+                // Lazy import
                 import("@/lib/detectLanguage").then(({ detectLanguage }) => {
                   const lang = detectLanguage(text);
                   if (lang) {
@@ -102,7 +103,6 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
                     const end = textarea.selectionEnd;
                     const newContent = content.substring(0, start) + formatted + content.substring(end);
                     setContent(newContent);
-                    // queue cursor update
                     setTimeout(() => {
                       textarea.selectionStart = textarea.selectionEnd = start + formatted.length;
                     }, 0);
@@ -110,7 +110,7 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
                 });
               }}
               placeholder="Take a note..."
-              className="w-full bg-transparent px-4 py-2 text-sm text-zinc-300 placeholder:text-zinc-600 outline-none resize-none min-h-[80px]"
+              className="px-4 py-2 text-sm min-h-[80px]"
               rows={3}
             />
             <div className="flex items-center justify-end gap-2 px-4 py-2 border-t border-white/5">
