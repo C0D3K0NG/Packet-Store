@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "packet-store-dev-secret-change-in-prod"
-);
+); 
 
 const COOKIE_NAME = "packet-access";
 const EXPIRATION_TIME = "30d";
