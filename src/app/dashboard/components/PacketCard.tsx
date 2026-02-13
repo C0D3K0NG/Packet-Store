@@ -335,6 +335,94 @@ export default function PacketCard({
                   remarkPlugins={[remarkGfm]}
                   components={{
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    input: ({ node, ...props }: any) => {
+                      if (props.type === "checkbox") {
+                        return (
+                          <input
+                            type="checkbox"
+                            checked={props.checked}
+                            onChange={(e) => {
+                              // We need to find this checkbox in the source content and toggle it
+                              // node.position should check the offset in the original string
+                              if (node.position) {
+                                e.stopPropagation(); // Prevent card click
+                                const offset = node.position.start.offset;
+                                // The node usually starts at the '[' of '[ ]' or '[x]' ???
+                                // Actually, for GFM task list items, the Input node is created from the checkbox.
+                                // Let's try to verify if we can find the pattern near the offset.
+                                // The offset might be slightly off depending on exact parsing, but usually it's accurate.
+
+                                // Simple Heuristic: Look for `[ ]` or `[x]` near the offset.
+                                // Since we don't have the exact index, we might need to search the string
+                                // BUT if we trust node.position, we can try to use it.
+
+                                // Alternative: Since modifying by offset is risky without valid offsets, 
+                                // let's try a safer approach:
+                                // Toggle the check at the approximate location.
+
+                                const newChecked = !props.checked;
+                                const char = newChecked ? "x" : " ";
+
+                                // We need to locate the `[ ]` or `[x]` in the content string.
+                                // HAST position offsets are 0-based index into the original file.
+                                // Let's verify if node.position.start.offset points to the `[`
+
+                                if (offset !== undefined) {
+                                  let targetIdx = offset;
+                                  // Adjust if needed. The input node usually corresponds to the `[ ]` construct.
+                                  // Let's verify what characters are at that offset.
+                                  // Note: This requires access to 'content' variable which is available in scope.
+
+                                  // Debugging: In a real scenario we'd want to be sure. 
+                                  // However, typical GFM parser puts the input at the start of the task list marker.
+
+                                  // Let's search for the bracket bounds around the offset
+                                  // We want to replace `[ ]` with `[x]` or `[x]` with `[ ]`
+
+                                  // We'll search backwards and forwards a bit if needed, but assuming strict GFM:
+                                  // The element is the `input`.
+                                  // The text is `[ ]` or `[x]`.
+
+                                  // Let's assume start.offset matches matching `[`
+                                  // We want to change the character at offset + 1
+
+                                  const currentContent = packet.content;
+
+                                  // Safety check: is it actually a bracket?
+                                  // There might be indentation.
+
+                                  // Let's rely on finding the closest `[` `]` pair near offset
+
+                                  /*
+                                  Updating logic:
+                                  If we click the checkbox, we want to toggle it.
+                                  We create a new content string.
+                                  */
+
+                                  // Robust way:
+                                  const before = currentContent.substring(0, offset);
+                                  const after = currentContent.substring(offset);
+
+                                  // The 'input' node in remark-gfm corresponds to the `[ ]` or `[x]`
+                                  // So `offset` should be the index of `[`
+
+                                  // Check if char at offset is '['
+                                  if (currentContent[offset] === '[') {
+                                    // Then index of char to change is offset + 1
+                                    const newContent = currentContent.substring(0, offset + 1) + char + currentContent.substring(offset + 2);
+                                    onUpdate(packet.id, { content: newContent });
+                                  }
+                                }
+                              }
+                            }}
+                            className="accent-teal-500 w-3.5 h-3.5 rounded cursor-pointer mr-2 align-middle"
+                            onClick={(e) => e.stopPropagation()} // Also prevent propagation on click
+                          />
+                        );
+                      }
+                      return <input {...props} />;
+                    },
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     code({ node, inline, className, children, style, ...props }: { node?: unknown, inline?: boolean, className?: string, children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>) {
                       const match = /language-(\w+)/.exec(className || "");
                       return !inline && match ? (
