@@ -16,6 +16,8 @@ interface Packet {
   pinned: boolean;
   createdAt: string;
   updatedAt?: string; // Optional for now as DB schema has updated_at
+  isPublic?: boolean;
+  shareToken?: string;
 }
 
 
@@ -82,6 +84,8 @@ export default function PacketCard({
   const [title, setTitle] = useState(packet.title);
   const [content, setContent] = useState(packet.content);
   const [showColors, setShowColors] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
@@ -96,8 +100,9 @@ export default function PacketCard({
           }
           setIsEditing(false);
         }
-        setShowColors(false);
       }
+      setShowColors(false);
+      setShowShare(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -107,6 +112,33 @@ export default function PacketCard({
     e.stopPropagation();
     navigator.clipboard.writeText(packet.content);
     toast.push("Copied to clipboard", "success");
+  };
+
+  const handleShareToggle = async (enable: boolean) => {
+    setIsSharing(true);
+    try {
+      const res = await fetch("/api/packets/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: packet.id, enable }),
+      });
+      const data = await res.json();
+      if (data.packet) {
+        onUpdate(packet.id, { isPublic: data.packet.isPublic, shareToken: data.packet.shareToken });
+        if (enable) {
+          navigator.clipboard.writeText(`${window.location.origin}/share/${data.packet.shareToken}`);
+          toast.push("Link copied to clipboard", "success");
+        } else {
+          toast.push("Sharing disabled", "info");
+        }
+      } else {
+        toast.push("Failed to update share status", "error");
+      }
+    } catch {
+      toast.push("Share error", "error");
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   const timeAgo = packet.updatedAt || packet.createdAt
@@ -300,6 +332,82 @@ export default function PacketCard({
             <span className="text-[10px] text-zinc-500">{timeAgo}</span>
 
             <div className="flex items-center gap-1">
+              {/* Share Button */}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowShare(!showShare);
+                    setShowColors(false);
+                  }}
+                  className={`p-1.5 rounded-lg text-xs transition-colors ${packet.isPublic
+                    ? "text-teal-400 bg-teal-500/10"
+                    : "text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+                    }`}
+                  title="Share"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                </button>
+
+                {/* Share Popover */}
+                <AnimatePresence>
+                  {showShare && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-10 right-0 w-64 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl p-3 z-30"
+                    >
+                      <h4 className="text-xs font-semibold text-zinc-300 mb-2">Share Packet</h4>
+                      {packet.isPublic ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 bg-zinc-800/50 p-1.5 rounded-lg border border-white/5">
+                            <input
+                              readOnly
+                              value={`${typeof window !== 'undefined' ? window.location.origin : ''}/share/${packet.shareToken}`}
+                              className="bg-transparent text-[10px] text-zinc-400 flex-1 outline-none font-mono"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/share/${packet.shareToken}`);
+                                toast.push("Copied", "success");
+                              }}
+                              className="p-1 hover:text-white text-zinc-500 transition-colors"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <button
+                            onClick={() => handleShareToggle(false)}
+                            disabled={isSharing}
+                            className="w-full py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-red-500/20"
+                          >
+                            {isSharing ? "Updating..." : "Disable Sharing"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-[10px] text-zinc-500 mb-3">
+                            Create a public link for this packet. Anyone with the link can view it.
+                          </p>
+                          <button
+                            onClick={() => handleShareToggle(true)}
+                            disabled={isSharing}
+                            className="w-full py-1.5 text-xs bg-teal-500 text-teal-950 font-medium rounded-lg hover:bg-teal-400 transition-colors"
+                          >
+                            {isSharing ? "Creating Link..." : "Create Public Link"}
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
               <button
                 onClick={handleCopy}
                 className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-white/5 transition-colors text-xs"

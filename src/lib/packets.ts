@@ -11,6 +11,8 @@ export interface Packet {
   content: string;
   color: string;
   pinned: boolean;
+  isPublic: boolean;
+  shareToken?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,6 +32,8 @@ function rowToPacket(row: Record<string, unknown>): Packet {
     content: (row.content as string) || "",
     color: (row.color as string) || "default",
     pinned: row.pinned as boolean,
+    isPublic: row.is_public as boolean,
+    shareToken: (row.share_token as string) || undefined,
     createdAt: (row.created_at as Date).toISOString(),
     updatedAt: (row.updated_at as Date).toISOString(),
   };
@@ -125,4 +129,56 @@ export async function deletePacket(email: string, id: string): Promise<boolean> 
     [id, email]
   );
   return (result.rowCount ?? 0) > 0;
+}
+
+/**
+ * Get a packet by its share token (public access).
+ */
+export async function getPacketByShareToken(token: string): Promise<Packet | null> {
+  await ensureDb();
+  const result = await query(
+    `SELECT * FROM packets
+     WHERE share_token = $1 AND is_public = TRUE`,
+    [token]
+  );
+  if (result.rows.length === 0) return null;
+  return rowToPacket(result.rows[0]);
+}
+
+/**
+ * Toggle share status.
+ */
+export async function togglePacketShare(
+  email: string,
+  id: string,
+  enable: boolean
+): Promise<Packet | null> {
+  await ensureDb();
+
+  if (enable) {
+    // Enable: Ensure it has a token and is_public=true
+    const result = await query(
+      `UPDATE packets 
+       SET is_public = TRUE, 
+           share_token = COALESCE(share_token, gen_random_uuid()),
+           updated_at = NOW()
+       WHERE id = $1 AND user_email = $2
+       RETURNING *`,
+      [id, email]
+    );
+    if (result.rows.length === 0) return null;
+    return rowToPacket(result.rows[0]);
+  } else {
+    // Disable: Set is_public=false
+    const result = await query(
+      `UPDATE packets 
+       SET is_public = FALSE,
+           updated_at = NOW()
+       WHERE id = $1 AND user_email = $2
+       RETURNING *`,
+      [id, email]
+    );
+    if (result.rows.length === 0) return null;
+    return rowToPacket(result.rows[0]);
+  }
 }
