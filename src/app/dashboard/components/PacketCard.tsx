@@ -7,6 +7,8 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { formatDistanceToNow } from "date-fns";
 import { useToast } from "@/app/context/ToastContext";
+import FormattingToolbar from "./FormattingToolbar";
+import { insertFormatting, FormatType } from "@/lib/textUtils";
 
 interface Packet {
   id: string;
@@ -87,6 +89,7 @@ export default function PacketCard({
   const [showShare, setShowShare] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const toast = useToast();
 
   const color = getColorClasses(packet.color);
@@ -94,12 +97,8 @@ export default function PacketCard({
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        if (isEditing) {
-          if (title !== packet.title || content !== packet.content) {
-            onUpdate(packet.id, { title, content });
-          }
-          setIsEditing(false);
-        }
+        // Clicked outside: Do nothing if editing (require explicit Save/Discard)
+        // In edit mode, allow closing menus but keep edit mode open
       }
       setShowColors(false);
       setShowShare(false);
@@ -139,6 +138,36 @@ export default function PacketCard({
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const handleFormat = (type: FormatType) => {
+    if (textareaRef.current) {
+      const { text, newCursor } = insertFormatting(textareaRef.current, type);
+      setContent(text);
+      // Need to defer cursor update to after render
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.selectionStart = newCursor;
+          textareaRef.current.selectionEnd = newCursor;
+        }
+      }, 0);
+    }
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (title !== packet.title || content !== packet.content) {
+      onUpdate(packet.id, { title, content });
+    }
+    setIsEditing(false);
+  };
+
+  const handleDiscard = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTitle(packet.title);
+    setContent(packet.content);
+    setIsEditing(false);
   };
 
   const timeAgo = packet.updatedAt || packet.createdAt
@@ -255,31 +284,49 @@ export default function PacketCard({
         <div className={`flex-1 min-h-[100px] text-sm text-zinc-300 transition-all duration-300 ${fontStyle === "mono" ? "font-mono" : "font-sans"
           } ${isBlurMode && !isEditing ? "blur-md hover:blur-none transition-all duration-500" : ""}`}>
           {isEditing ? (
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              onPaste={(e) => {
-                const text = e.clipboardData.getData("text");
-                import("@/lib/detectLanguage").then(({ detectLanguage }) => {
-                  const lang = detectLanguage(text);
-                  if (lang) {
-                    e.preventDefault();
-                    const formatted = "```" + lang + "\n" + text + "\n```";
-                    const textarea = e.currentTarget;
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const newContent = content.substring(0, start) + formatted + content.substring(end);
-                    setContent(newContent);
-                    setTimeout(() => {
-                      textarea.selectionStart = textarea.selectionEnd = start + formatted.length;
-                    }, 0);
-                  }
-                });
-              }}
-              placeholder="Take a note..."
-              className={`w-full h-full bg-transparent text-zinc-300 placeholder:text-zinc-500 outline-none resize-none text-xs ${fontStyle === "mono" ? "font-mono" : "font-sans"}`}
-              rows={6}
-            />
+            <div className="flex flex-col h-full">
+              <FormattingToolbar onFormat={handleFormat} />
+              <textarea
+                ref={textareaRef}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                onPaste={(e) => {
+                  const text = e.clipboardData.getData("text");
+                  import("@/lib/detectLanguage").then(({ detectLanguage }) => {
+                    const lang = detectLanguage(text);
+                    if (lang) {
+                      e.preventDefault();
+                      const formatted = "```" + lang + "\n" + text + "\n```";
+                      const textarea = e.currentTarget;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const newContent = content.substring(0, start) + formatted + content.substring(end);
+                      setContent(newContent);
+                      setTimeout(() => {
+                        textarea.selectionStart = textarea.selectionEnd = start + formatted.length;
+                      }, 0);
+                    }
+                  });
+                }}
+                placeholder="Take a note..."
+                className={`w-full h-full bg-transparent text-zinc-300 placeholder:text-zinc-500 outline-none resize-none text-xs ${fontStyle === "mono" ? "font-mono" : "font-sans"}`}
+                rows={6}
+              />
+              <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-white/5">
+                <button
+                  onClick={handleDiscard}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+                >
+                  Discard
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-teal-500/20 text-teal-400 hover:bg-teal-500/30 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:p-0 prose-pre:bg-transparent">
               {packet.content ? (

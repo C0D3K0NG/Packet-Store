@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import FormattingToolbar from "./FormattingToolbar";
+import { insertFormatting, FormatType } from "@/lib/textUtils";
 
 interface CreatePacketBarProps {
   onCreate: (title: string, content: string) => void;
@@ -11,6 +13,21 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleFormat = (type: FormatType) => {
+    if (textareaRef.current) {
+      const { text, newCursor } = insertFormatting(textareaRef.current, type);
+      setContent(text);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.selectionStart = newCursor;
+          textareaRef.current.selectionEnd = newCursor;
+        }
+      }, 0);
+    }
+  };
 
   function handleSubmit(e?: FormEvent) {
     e?.preventDefault();
@@ -59,7 +76,11 @@ export default function CreatePacketBar({ onCreate }: CreatePacketBarProps) {
               className="w-full bg-transparent px-4 pt-3 pb-1 text-sm font-semibold text-white placeholder:text-zinc-500 outline-none"
               autoFocus
             />
+            <div className="px-4 pt-1">
+              <FormattingToolbar onFormat={handleFormat} />
+            </div>
             <textarea
+              ref={textareaRef}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={(e) => {
