@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { getPacketByShareToken } from "@/lib/packets";
@@ -55,6 +56,7 @@ export default async function PublicPacketPage({ params }: { params: Promise<{ t
           <div className="prose prose-invert prose-lg max-w-none">
             {packet.content ? (
               <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
                 components={{
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   code({ node, inline, className, children, style, ...props }: { node?: unknown, inline?: boolean, className?: string, children?: React.ReactNode } & React.HTMLAttributes<HTMLElement>) {
